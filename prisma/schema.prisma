@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String      @id @default(cuid())
+  email     String      @unique
+  name      String?
+  xp        Int         @default(0)
+  level     Int         @default(1)
+  habits    Habit[]
+  checkIns  CheckIn[]
+  memos     DailyMemo[] // DailyMemoとのリレーション
+  createdAt DateTime    @default(now())
+}
+
+model Habit {
+  id         String    @id @default(cuid())
+  name       String
+  category   String
+  color      String?
+  daysOfWeek String[]
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  checkIns   CheckIn[]
+  createdAt  DateTime  @default(now())
+}
+
+model CheckIn {
+  id          String   @id @default(cuid())
+  date        DateTime @db.Date // 日付のみを格納
+  isCompleted Boolean
+  habitId     String
+  userId      String
+  habit       Habit    @relation(fields: [habitId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, habitId, date]) // ユーザーごと、習慣ごとに同じ日付のチェックインは1つだけ
+}
+
+// デイリーメモ用のモデル
+model DailyMemo {
+  id      String   @id @default(cuid())
+  date    DateTime @db.Date // 日付のみを格納
+  content String   @db.Text // 長文を許容
+  userId  String
+  user    User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, date]) // ユーザーごとに同じ日付のメモは1つだけ
+}
