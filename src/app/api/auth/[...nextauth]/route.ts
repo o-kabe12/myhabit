@@ -1,13 +1,20 @@
 // src/app/api/auth/[...nextauth]/route.ts
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import { PrismaClient } from "@prisma/client";
+import { PrismaAdapter } from "@auth/prisma-adapter"; // ここが正しいか確認
+import { PrismaClient } from "@prisma/client"; // ここが正しいか確認
 
-const prisma = new PrismaClient();
+// PrismaClientのインスタンスがグローバルに確保されているか再確認
+declare global {
+  var prisma: PrismaClient | undefined;
+}
+
+const prisma = global.prisma || new PrismaClient();
+if (process.env.NODE_ENV === "development") global.prisma = prisma;
+
 
 export const authOptions = {
-  // PrismaをNextAuthのデータベースアダプターとして使用
+  // ここで `prisma` インスタンスが正しく渡されているか最重要確認
   adapter: PrismaAdapter(prisma),
   // プロバイダーの設定 (Google OAuth)
   providers: [
@@ -16,24 +23,19 @@ export const authOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
     }),
   ],
-  // ユーザーが認証されたときにセッションがどこに保存されるかを指定
   session: {
-    strategy: "jwt", // JWT (JSON Web Tokens) を使用
+    strategy: "jwt",
   },
-  // 認証関連のページ（ログイン、エラーなど）のパスを指定
   pages: {
-    signIn: "/login", // カスタムログインページを使用する場合
+    signIn: "/login",
   },
-  // コールバック関数 (オプション、必要に応じて拡張)
   callbacks: {
-    // セッションにユーザーIDを含める
     async session({ session, token, user }: any) {
       if (session.user) {
         session.user.id = user?.id || token?.sub;
       }
       return session;
     },
-    // JWTにユーザーIDを含める (strategy: "jwt" の場合)
     async jwt({ token, user, account, profile, isNewUser }: any) {
       if (user) {
         token.id = user.id;
