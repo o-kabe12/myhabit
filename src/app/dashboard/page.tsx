@@ -88,34 +88,36 @@ export default async function DashboardPage() {
             ) : (
               <div className="space-y-4">
                 {habits.map((habit) => (
-                  <div key={habit.id} className="bg-white p-6 rounded-lg shadow-md flex items-center justify-between transition-transform transform hover:scale-[1.01]">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg" style={{ backgroundColor: habit.color }}>
-                        {habit.name[0]} {/* 習慣名の最初の文字を表示 */}
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-bold text-gray-800">{habit.name}</h2>
-                        <p className="text-sm text-gray-500">{habit.category}</p>
-                        <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-xs font-medium text-gray-600">
-                          {dayOrder.map(day => (
-                            <span
-                              key={day}
-                              className={`px-2 py-1 rounded-full ${
-                                habit.daysOfWeek.includes(day)
-                                  ? 'bg-indigo-100 text-indigo-800'
-                                  : 'bg-gray-100 text-gray-400'
-                              }`}
-                            >
-                              {day}
-                            </span>
-                          ))}
+                  <Link href={`/habit/${habit.id}`} key={habit.id} className="block cursor-pointer hover:opacity-80 transition-opacity duration-200">
+                    <div className="bg-white p-6 rounded-lg shadow-md flex items-center justify-between transition-transform transform hover:scale-[1.01]">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg" style={{ backgroundColor: habit.color }}>
+                          {habit.name[0]} {/* 習慣名の最初の文字を表示 */}
+                        </div>
+                        <div>
+                          <h2 className="text-xl font-bold text-gray-800">{habit.name}</h2>
+                          <p className="text-sm text-gray-500">{habit.category}</p>
+                          <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-xs font-medium text-gray-600">
+                            {dayOrder.map(day => (
+                              <span
+                                key={day}
+                                className={`px-2 py-1 rounded-full ${
+                                  habit.daysOfWeek.includes(day)
+                                    ? 'bg-indigo-100 text-indigo-800'
+                                    : 'bg-gray-100 text-gray-400'
+                                }`}
+                              >
+                                {day}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       </div>
+                      <span className="text-indigo-600">
+                        <ChevronRightIcon className="h-6 w-6" />
+                      </span>
                     </div>
-                    <Link href={`/habit/${habit.id}`} className="text-indigo-600 hover:text-indigo-800">
-                      <ChevronRightIcon className="h-6 w-6" />
-                    </Link>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
