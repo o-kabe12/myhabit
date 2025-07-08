@@ -5,19 +5,9 @@ import { redirect } from "next/navigation";
 import { PrismaClient } from "@prisma/client";
 import Link from "next/link";
 import { PlusCircleIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
+import { Habit } from "../types";
 
 const prisma = new PrismaClient();
-
-// Habitの型定義（Prismaモデルと同期）
-interface Habit {
-  id: string;
-  name: string;
-  category: string;
-  color: string;
-  daysOfWeek: string[];
-  userId: string;
-  createdAt: Date;
-}
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);

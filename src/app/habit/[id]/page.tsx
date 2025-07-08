@@ -1,23 +1,15 @@
-// src/app/habit/[id]/page.tsx
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"; // 相対パスを修正
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 import { PrismaClient } from "@prisma/client";
 import Link from "next/link";
-import { ArrowLeftIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { ArrowLeftIcon, PencilIcon } from "@heroicons/react/24/outline";
+import DeleteHabitButton from "../../components/DeleteHabitButton";
+import { Habit } from "../../types";
 
 const prisma = new PrismaClient();
 
 // Habitの型定義（Prismaモデルと同期）
-interface Habit {
-  id: string;
-  name: string;
-  category: string;
-  color: string;
-  daysOfWeek: string[];
-  userId: string;
-  createdAt: Date;
-}
 
 interface HabitDetailPageProps {
   params: {
@@ -27,21 +19,19 @@ interface HabitDetailPageProps {
 
 export default async function HabitDetailPage({ params }: HabitDetailPageProps) {
   const session = await getServerSession(authOptions);
-
-  // ログインしていない場合はログインページへリダイレクト
+  
   if (!session || !session.user || !session.user.id) {
     redirect("/login");
   }
-
-  const { id } = params; // URLから習慣IDを取得
-
+  
+  const id = params.id;
+  
   let habit: Habit | null = null;
   try {
-    // データベースから特定の習慣を取得
     habit = await prisma.habit.findUnique({
       where: {
         id: id,
-        userId: session.user.id, // 自分の習慣であることを確認
+        userId: session.user.id,
       },
     });
   } catch (error) {
@@ -52,10 +42,9 @@ export default async function HabitDetailPage({ params }: HabitDetailPageProps) 
       </div>
     );
   } finally {
-    await prisma.$disconnect(); // データベース接続を閉じる
+    await prisma.$disconnect();
   }
 
-  // 習慣が見つからない場合、または他のユーザーの習慣だった場合
   if (!habit) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -70,7 +59,6 @@ export default async function HabitDetailPage({ params }: HabitDetailPageProps) 
     );
   }
 
-  // 曜日の表示順を定義
   const dayOrder = ["月", "火", "水", "木", "金", "土", "日"];
 
   return (
@@ -89,11 +77,7 @@ export default async function HabitDetailPage({ params }: HabitDetailPageProps) 
                   <PencilIcon className="h-6 w-6" />
                   <span className="font-medium">編集</span>
                 </Link>
-                {/* 削除機能は次で実装 */}
-                {/* <button className="text-red-600 hover:text-red-800 flex items-center space-x-2">
-                  <TrashIcon className="h-6 w-6" />
-                  <span className="font-medium">削除</span>
-                </button> */}
+                <DeleteHabitButton habitId={habit.id} />
               </div>
             </div>
 
