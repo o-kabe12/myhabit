@@ -2,7 +2,7 @@ export interface Habit {
   id: string;
   name: string;
   category: string;
-  color: string;
+  color: string | null;
   daysOfWeek: string[];
   userId: string;
   createdAt: Date;
