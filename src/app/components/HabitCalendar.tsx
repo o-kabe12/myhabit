@@ -1,25 +1,24 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { ArrowPathIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import { CheckIn } from "../types"; // CheckIn型をインポート
+import { ArrowPathIcon, ExclamationTriangleIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import useSWR from "swr";
+import { CheckIn } from "../types";
 
 interface HabitCalendarProps {
   habitId: string;
 }
 
-// ヘルパー関数: 指定された月の全ての日付を生成
-const getDaysInMonth = (year: number, month: number): Date[] => {
-  const date = new Date(year, month, 1);
-  const days = [];
-  while (date.getMonth() === month) {
-    days.push(new Date(date)); // 新しいDateオブジェクトをプッシュ
-    date.setDate(date.getDate() + 1);
+// データフェッチ関数 (SWR用)
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error('Failed to fetch data');
   }
-  return days;
+  return res.json();
 };
 
-// ヘルパー関数: ISO形式の日付文字列を YYYY-MM-DD 形式に変換
+// ISO形式の日付文字列をYYYY-MM-DD 形式に変換
 const formatDateToYYYYMMDD = (date: Date): string => {
   const year = date.getFullYear();
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -28,96 +27,68 @@ const formatDateToYYYYMMDD = (date: Date): string => {
 };
 
 // カレンダーのセルの色を決定するヘルパー関数
-const getCellColor = (checkInCount: number): string => {
-  if (checkInCount > 0) {
+const getCellColor = (isChecked: boolean): string => {
+  if (isChecked) {
     return "bg-green-500"; // チェックインあり
   }
-  return "bg-gray-200"; // チェックインなし
+  // 今日の日付より未来の場合は薄いグレー、過去の場合は濃いグレー
+  // return "bg-gray-200"; // チェックインなし
+  return "bg-gray-200"; // 未完了
 };
 
 export default function HabitCalendar({ habitId }: HabitCalendarProps) {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  // チェックインデータを YYYY-MM-DD -> CheckInオブジェクト のマップとして保持
-  const [checkedDatesMap, setCheckedDatesMap] = useState<Map<string, CheckIn>>(new Map());
+  // 現在表示している月の状態
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    const today = new Date();
+    return new Date(today.getFullYear(), today.getMonth(), 1); // 今月の1日
+  });
 
-  // 表示する期間（例: 過去1年間）
-  const now = useMemo(() => new Date(), []);
-  const startYear = useMemo(() => now.getFullYear() - 1, [now]);
-  const endYear = useMemo(() => now.getFullYear(), [now]);
+  // SWRを使ってデータをフェッチ
+  // URLは現在の月に基づいて動的に生成
+  const startDate = formatDateToYYYYMMDD(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1));
+  const endDate = formatDateToYYYYMMDD(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0)); // 今月の最終日
 
-  // APIからチェックインデータを取得
-  const fetchCalendarData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(`/api/checkin/calendar/${habitId}?startDate=${startYear}-01-01&endDate=${endYear}-12-31`);
-      if (!response.ok) {
-        throw new Error("カレンダーデータの取得に失敗しました。");
-      }
-      const data: CheckIn[] = await response.json();
-      const newMap = new Map<string, CheckIn>();
-      data.forEach(checkIn => {
-        // Dateオブジェクトをそのまま使用
-        newMap.set(formatDateToYYYYMMDD(new Date(checkIn.date)), checkIn);
-      });
-      setCheckedDatesMap(newMap);
-    } catch (err: any) {
-      console.error("Failed to fetch calendar data:", err);
-      setError("カレンダーの読み込み中にエラーが発生しました。");
-    } finally {
-      setLoading(false);
+  const apiUrl = `/api/checkin/calendar/${habitId}?startDate=${startDate}&endDate=${endDate}`;
+  const { data: checkIns, error, isLoading, mutate } = useSWR<CheckIn[]>(apiUrl, fetcher);
+
+  // チェックインデータをYYYY-MM-DD形式のSetに変換して高速検索できるようにする
+  const checkedDatesSet = useMemo(() => {
+    if (!checkIns) return new Set<string>();
+    return new Set(checkIns.map(checkIn => formatDateToYYYYMMDD(new Date(checkIn.date))));
+  }, [checkIns]);
+
+  // 現在の月の全ての日付を生成
+  const daysInMonth = useMemo(() => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const date = new Date(year, month, 1);
+    const days = [];
+    while (date.getMonth() === month) {
+      days.push(new Date(date));
+      date.setDate(date.getDate() + 1);
     }
-  }, [habitId, startYear, endYear]);
+    return days;
+  }, [currentMonth]);
 
+  // 月の移動ハンドラ
+  const goToPreviousMonth = useCallback(() => {
+    setCurrentMonth(prevMonth => new Date(prevMonth.getFullYear(), prevMonth.getMonth() - 1, 1));
+  }, []);
+
+  const goToNextMonth = useCallback(() => {
+    setCurrentMonth(prevMonth => new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 1));
+  }, []);
+
+  // CheckInButtonからのリアルタイム更新をトリガーするための関数をエクスポート
+  // Context APIなどを使えばもっと綺麗にできるが、今回はProps Drillingで対応
   useEffect(() => {
-    fetchCalendarData();
-  }, [fetchCalendarData]);
-
-  // カレンダーグリッドのデータを生成
-  const calendarData = useMemo(() => {
-    const data: { date: Date; isChecked: boolean }[] = [];
-    const tempDate = new Date(startYear, 0, 1); // 1月1日から開始
-
-    // 過去1年間の日付を全て生成し、チェックイン状態を紐付け
-    while (tempDate.getFullYear() <= endYear) {
-      const formattedDate = formatDateToYYYYMMDD(tempDate);
-      data.push({
-        date: new Date(tempDate), // 新しいDateオブジェクトをコピー
-        isChecked: checkedDatesMap.has(formattedDate),
-      });
-      tempDate.setDate(tempDate.getDate() + 1);
-    }
-    return data;
-  }, [checkedDatesMap, startYear, endYear]);
+    // グローバルなイベントリスナーなどを設定して mutate を呼び出すことも可能
+    // 例: window.addEventListener('checkinUpdated', mutate);
+    // return () => window.removeEventListener('checkinUpdated', mutate);
+  }, [mutate]);
 
 
-  // 月ごとの表示データを整理
-  const monthsData = useMemo(() => {
-    const months: { year: number; month: number; days: { date: Date; isChecked: boolean }[] }[] = [];
-    let currentMonth: { year: number; month: number; days: { date: Date; isChecked: boolean }[] } | null = null;
-
-    calendarData.forEach(day => {
-      const dayYear = day.date.getFullYear();
-      const dayMonth = day.date.getMonth(); // 0-indexed
-
-      if (!currentMonth || currentMonth.year !== dayYear || currentMonth.month !== dayMonth) {
-        if (currentMonth) {
-          months.push(currentMonth);
-        }
-        currentMonth = { year: dayYear, month: dayMonth, days: [] };
-      }
-      currentMonth.days.push(day);
-    });
-
-    if (currentMonth) {
-      months.push(currentMonth);
-    }
-    return months;
-  }, [calendarData]);
-
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-48 text-gray-600">
         <ArrowPathIcon className="animate-spin h-8 w-8 mr-3" />
@@ -130,51 +101,66 @@ export default function HabitCalendar({ habitId }: HabitCalendarProps) {
     return (
       <div className="flex flex-col items-center justify-center h-48 text-red-600">
         <ExclamationTriangleIcon className="h-10 w-10 mb-2" />
-        <p>{error}</p>
-        <button onClick={fetchCalendarData} className="mt-4 px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200">
+        <p>カレンダーの読み込み中にエラーが発生しました。</p>
+        <button onClick={() => mutate()} className="mt-4 px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200">
           再試行
         </button>
       </div>
     );
   }
 
+  const todayYYYYMMDD = formatDateToYYYYMMDD(new Date());
+
   return (
     <div className="p-4 bg-white rounded-lg shadow-inner">
-      <h3 className="text-xl font-semibold text-gray-800 mb-4">習慣カレンダー</h3>
-      <div className="flex flex-wrap gap-4 justify-center">
-        {monthsData.map((monthData, monthIndex) => (
-          <div key={`${monthData.year}-${monthData.month}`} className="flex flex-col items-center border border-gray-200 rounded-lg p-3">
-            <h4 className="font-medium text-gray-700 mb-2">
-              {monthData.year}年 {monthData.month + 1}月
-            </h4>
-            <div className="grid grid-cols-7 gap-1 text-xs">
-              {/* 曜日ヘッダー */}
-              {['日', '月', '火', '水', '木', '金', '土'].map(dayName => (
-                <div key={dayName} className="w-6 h-6 text-center font-bold text-gray-500">
-                  {dayName}
-                </div>
-              ))}
-              {/* 月の開始曜日までの空白セル */}
-              {Array.from({ length: monthData.days[0].date.getDay() }).map((_, i) => (
-                <div key={`empty-${i}`} className="w-6 h-6"></div>
-              ))}
-              {/* 日付セル */}
-              {monthData.days.map((day, dayIndex) => (
-                <div
-                  key={`${day.date.toDateString()}`} // Dateオブジェクトの文字列表現をキーに
-                  className={`w-6 h-6 rounded-sm flex items-center justify-center text-white ${getCellColor(day.isChecked ? 1 : 0)}`}
-                  title={`${formatDateToYYYYMMDD(day.date)} ${day.isChecked ? '完了' : '未完了'}`}
-                >
-                  {/* 日付の数字は表示しない、色だけで表現 */}
-                </div>
-              ))}
-            </div>
+      <div className="flex justify-between items-center mb-4">
+        <button onClick={goToPreviousMonth} className="p-2 rounded-full hover:bg-gray-200">
+          <ChevronLeftIcon className="h-6 w-6 text-gray-600" />
+        </button>
+        <h3 className="text-xl font-semibold text-gray-800">
+          {currentMonth.getFullYear()}年 {currentMonth.getMonth() + 1}月
+        </h3>
+        <button onClick={goToNextMonth} className="p-2 rounded-full hover:bg-gray-200">
+          <ChevronRightIcon className="h-6 w-6 text-gray-600" />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-7 gap-1 text-xs">
+        {/* 曜日ヘッダー */}
+        {['日', '月', '火', '水', '木', '金', '土'].map(dayName => (
+          <div key={dayName} className="w-8 h-8 text-center font-bold text-gray-500 flex items-center justify-center">
+            {dayName}
           </div>
         ))}
-        {monthsData.length === 0 && (
-          <p className="text-gray-600 text-center col-span-full">まだチェックインがありません。</p>
-        )}
+        {/* 月の開始曜日までの空白セル */}
+        {Array.from({ length: daysInMonth[0].getDay() }).map((_, i) => (
+          <div key={`empty-${i}`} className="w-8 h-8"></div>
+        ))}
+        {/* 日付セル */}
+        {daysInMonth.map((day, index) => {
+          const formattedDate = formatDateToYYYYMMDD(day);
+          const isChecked = checkedDatesSet.has(formattedDate);
+          const isToday = formattedDate === todayYYYYMMDD;
+          const isFuture = day.getTime() > new Date().setHours(23,59,59,999); // 今日の終わりより未来
+
+          return (
+            <div
+              key={formattedDate}
+              className={`w-8 h-8 rounded-sm flex items-center justify-center text-xs font-medium relative
+                ${getCellColor(isChecked)}
+                ${isToday ? 'border-2 border-blue-500' : ''}
+                ${isFuture ? 'bg-gray-100 text-gray-400' : ''}
+              `}
+              title={`${formattedDate} ${isChecked ? '完了' : '未完了'}`}
+            >
+              {day.getDate()} {/* 日付の数字を表示 */}
+            </div>
+          );
+        })}
       </div>
+      {daysInMonth.length === 0 && (
+        <p className="text-gray-600 text-center mt-4">この月には日付がありません。</p>
+      )}
     </div>
   );
 }
