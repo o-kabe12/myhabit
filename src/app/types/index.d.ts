@@ -7,3 +7,19 @@ export interface Habit {
   userId: string;
   createdAt: Date;
 }
+
+export interface CheckIn {
+  id: string;
+  date: Date; // Date型で扱う
+  isCompleted: boolean; // 新しく追加されたフィールド
+  habitId: string;
+  userId: string;
+  createdAt: Date;
+}
+
+export interface DailyMemo {
+  id: string;
+  date: Date;
+  content: string;
+  userId: string;
+}

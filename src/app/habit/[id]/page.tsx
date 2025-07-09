@@ -1,3 +1,4 @@
+// src/app/habit/[id]/page.tsx
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
@@ -5,27 +6,26 @@ import { PrismaClient } from "@prisma/client";
 import Link from "next/link";
 import { ArrowLeftIcon, PencilIcon } from "@heroicons/react/24/outline";
 import DeleteHabitButton from "../../components/DeleteHabitButton";
+import CheckInButton from "../../components/CheckInButton"; // ★ここを追加★
 import { Habit } from "../../types";
 
 const prisma = new PrismaClient();
 
-// Habitの型定義（Prismaモデルと同期）
-
 interface HabitDetailPageProps {
   params: {
-    id: string; // URLパスから取得する習慣ID
+    id: string;
   };
 }
 
 export default async function HabitDetailPage({ params }: HabitDetailPageProps) {
   const session = await getServerSession(authOptions);
-  
+
   if (!session || !session.user || !session.user.id) {
     redirect("/login");
   }
-  
-  const id = params.id;
-  
+
+  const id = params.id; // params.id のアクセス方法を修正済
+
   let habit: Habit | null = null;
   try {
     habit = await prisma.habit.findUnique({
@@ -60,6 +60,15 @@ export default async function HabitDetailPage({ params }: HabitDetailPageProps) 
   }
 
   const dayOrder = ["月", "火", "水", "木", "金", "土", "日"];
+
+  // 今日の日付を 'YYYY-MM-DD' 形式で取得
+  // サーバー側で生成し、クライアントに渡す
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = (today.getMonth() + 1).toString().padStart(2, '0');
+  const day = today.getDate().toString().padStart(2, '0');
+  const todayDateString = `${year}-${month}-${day}`;
+
 
   return (
     <div className="min-h-screen bg-gray-100 py-6 sm:py-12">
@@ -116,10 +125,14 @@ export default async function HabitDetailPage({ params }: HabitDetailPageProps) 
                 </div>
             </div>
 
-            {/* 今後の進捗記録セクション（Placeholder） */}
+            <div className="mt-8 text-center">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">今日の進捗</h2>
+                <CheckInButton habitId={habit.id} date={todayDateString} />
+            </div>
+
             <div className="mt-8 p-6 bg-white border border-dashed border-gray-300 rounded-lg text-center text-gray-600">
-                <p className="text-lg font-semibold mb-2">💡 ここに習慣の進捗記録機能が来ます</p>
-                <p className="text-sm">（例：今日の達成状況を記録、過去の履歴表示など）</p>
+                <p className="text-lg font-semibold mb-2">💡 ここに習慣の過去の進捗履歴やカレンダー機能が来ます</p>
+                <p className="text-sm">（例：日々の達成状況をカレンダーで表示、統計データなど）</p>
             </div>
 
           </div>

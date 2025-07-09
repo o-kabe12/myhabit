@@ -45,6 +45,7 @@ model CheckIn {
   user        User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, habitId, date]) // ユーザーごと、習慣ごとに同じ日付のチェックインは1つだけ
+  @@map("check_ins")
 }
 
 // デイリーメモ用のモデル
