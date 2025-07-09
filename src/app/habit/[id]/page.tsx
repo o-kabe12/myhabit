@@ -1,4 +1,3 @@
-// src/app/habit/[id]/page.tsx
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
@@ -6,7 +5,8 @@ import { PrismaClient } from "@prisma/client";
 import Link from "next/link";
 import { ArrowLeftIcon, PencilIcon } from "@heroicons/react/24/outline";
 import DeleteHabitButton from "../../components/DeleteHabitButton";
-import CheckInButton from "../../components/CheckInButton"; // ★ここを追加★
+import CheckInButton from "../../components/CheckInButton";
+import HabitCalendar from "../../components/HabitCalendar"; // ★ここを追加★
 import { Habit } from "../../types";
 
 const prisma = new PrismaClient();
@@ -24,7 +24,7 @@ export default async function HabitDetailPage({ params }: HabitDetailPageProps) 
     redirect("/login");
   }
 
-  const id = params.id; // params.id のアクセス方法を修正済
+  const id = params.id;
 
   let habit: Habit | null = null;
   try {
@@ -61,8 +61,6 @@ export default async function HabitDetailPage({ params }: HabitDetailPageProps) 
 
   const dayOrder = ["月", "火", "水", "木", "金", "土", "日"];
 
-  // 今日の日付を 'YYYY-MM-DD' 形式で取得
-  // サーバー側で生成し、クライアントに渡す
   const today = new Date();
   const year = today.getFullYear();
   const month = (today.getMonth() + 1).toString().padStart(2, '0');
@@ -130,9 +128,8 @@ export default async function HabitDetailPage({ params }: HabitDetailPageProps) 
                 <CheckInButton habitId={habit.id} date={todayDateString} />
             </div>
 
-            <div className="mt-8 p-6 bg-white border border-dashed border-gray-300 rounded-lg text-center text-gray-600">
-                <p className="text-lg font-semibold mb-2">💡 ここに習慣の過去の進捗履歴やカレンダー機能が来ます</p>
-                <p className="text-sm">（例：日々の達成状況をカレンダーで表示、統計データなど）</p>
+            <div className="mt-8">
+                <HabitCalendar habitId={habit.id} />
             </div>
 
           </div>
