@@ -1,8 +1,7 @@
-// src/app/api/habit/[id]/route.ts
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"; // 相対パスを修正
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 declare global {
   var prisma: PrismaClient | undefined;
@@ -69,24 +68,36 @@ export async function DELETE(
     return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
   }
 
-  const id = params.id;
+  const id = params.id; // 習慣のID
+  const userId = session.user.id;
 
   try {
-    // 習慣が存在し、かつ現在のユーザーのものであることを確認
-    const existingHabit = await prisma.habit.findUnique({
+    // まず、削除対象の習慣が現在のユーザーのものであるか確認
+    const habit = await prisma.habit.findUnique({
       where: { id: id },
     });
 
-    if (!existingHabit || existingHabit.userId !== session.user.id) {
+    if (!habit || habit.userId !== userId) {
       return NextResponse.json({ error: "習慣が見つからないか、アクセス権がありません。" }, { status: 404 });
     }
 
-    await prisma.habit.delete({
-      where: { id: id },
-    });
+    // 習慣を削除する前に、関連する全てのチェックイン記録を削除する
+    // Prismaのトランザクションを使って、複数の操作をまとめて実行し、
+    // どれか一つでも失敗したら全てをロールバックするようにします。
+    await prisma.$transaction([
+      prisma.checkIn.deleteMany({
+        where: { habitId: id },
+      }),
+      prisma.habit.delete({
+        where: { id: id },
+      }),
+    ]);
+
     return NextResponse.json({ message: "習慣が正常に削除されました。" }, { status: 200 });
+
   } catch (error) {
-    console.error("DELETE - 習慣の削除エラー:", error); // デバッグ用ログ
+    console.error("習慣の削除エラー:", error);
+    // PrismaのエラーコードP2003（外部キー制約違反）をより具体的にハンドリングすることも可能
     return NextResponse.json({ error: "習慣の削除に失敗しました。" }, { status: 500 });
   } finally {
     await prisma.$disconnect();

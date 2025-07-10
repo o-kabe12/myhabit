@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { ArrowPathIcon, ExclamationTriangleIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import useSWR from "swr";
 import { CheckIn } from "../types";
@@ -15,6 +15,7 @@ const fetcher = async (url: string) => {
   if (!res.ok) {
     throw new Error('Failed to fetch data');
   }
+  // APIが直接配列を返すことを前提とする
   return res.json();
 };
 
@@ -26,38 +27,33 @@ const formatDateToYYYYMMDD = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
-// カレンダーのセルの色を決定するヘルパー関数
 const getCellColor = (isChecked: boolean): string => {
   if (isChecked) {
-    return "bg-green-500"; // チェックインあり
+    return 'bg-green-500 text-white'; // チェックイン済み
   }
-  // 今日の日付より未来の場合は薄いグレー、過去の場合は濃いグレー
-  // return "bg-gray-200"; // チェックインなし
-  return "bg-gray-200"; // 未完了
+  return 'bg-gray-200 text-gray-700'; // 未チェックイン
 };
 
 export default function HabitCalendar({ habitId }: HabitCalendarProps) {
-  // 現在表示している月の状態
   const [currentMonth, setCurrentMonth] = useState(() => {
     const today = new Date();
-    return new Date(today.getFullYear(), today.getMonth(), 1); // 今月の1日
+    return new Date(today.getFullYear(), today.getMonth(), 1);
   });
 
-  // SWRを使ってデータをフェッチ
-  // URLは現在の月に基づいて動的に生成
   const startDate = formatDateToYYYYMMDD(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1));
-  const endDate = formatDateToYYYYMMDD(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0)); // 今月の最終日
+  const endDate = formatDateToYYYYMMDD(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0));
 
   const apiUrl = `/api/checkin/calendar/${habitId}?startDate=${startDate}&endDate=${endDate}`;
   const { data: checkIns, error, isLoading, mutate } = useSWR<CheckIn[]>(apiUrl, fetcher);
 
-  // チェックインデータをYYYY-MM-DD形式のSetに変換して高速検索できるようにする
   const checkedDatesSet = useMemo(() => {
-    if (!checkIns) return new Set<string>();
+    // dataが undefined, null, または配列でない場合に備える
+    if (!checkIns || !Array.isArray(checkIns)) {
+        return new Set<string>();
+    }
     return new Set(checkIns.map(checkIn => formatDateToYYYYMMDD(new Date(checkIn.date))));
   }, [checkIns]);
 
-  // 現在の月の全ての日付を生成
   const daysInMonth = useMemo(() => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
@@ -70,7 +66,6 @@ export default function HabitCalendar({ habitId }: HabitCalendarProps) {
     return days;
   }, [currentMonth]);
 
-  // 月の移動ハンドラ
   const goToPreviousMonth = useCallback(() => {
     setCurrentMonth(prevMonth => new Date(prevMonth.getFullYear(), prevMonth.getMonth() - 1, 1));
   }, []);
@@ -78,15 +73,6 @@ export default function HabitCalendar({ habitId }: HabitCalendarProps) {
   const goToNextMonth = useCallback(() => {
     setCurrentMonth(prevMonth => new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 1));
   }, []);
-
-  // CheckInButtonからのリアルタイム更新をトリガーするための関数をエクスポート
-  // Context APIなどを使えばもっと綺麗にできるが、今回はProps Drillingで対応
-  useEffect(() => {
-    // グローバルなイベントリスナーなどを設定して mutate を呼び出すことも可能
-    // 例: window.addEventListener('checkinUpdated', mutate);
-    // return () => window.removeEventListener('checkinUpdated', mutate);
-  }, [mutate]);
-
 
   if (isLoading) {
     return (
@@ -141,7 +127,7 @@ export default function HabitCalendar({ habitId }: HabitCalendarProps) {
           const formattedDate = formatDateToYYYYMMDD(day);
           const isChecked = checkedDatesSet.has(formattedDate);
           const isToday = formattedDate === todayYYYYMMDD;
-          const isFuture = day.getTime() > new Date().setHours(23,59,59,999); // 今日の終わりより未来
+          const isFuture = day.getTime() > new Date().setHours(23,59,59,999);
 
           return (
             <div
@@ -153,7 +139,7 @@ export default function HabitCalendar({ habitId }: HabitCalendarProps) {
               `}
               title={`${formattedDate} ${isChecked ? '完了' : '未完了'}`}
             >
-              {day.getDate()} {/* 日付の数字を表示 */}
+              {day.getDate()}
             </div>
           );
         })}

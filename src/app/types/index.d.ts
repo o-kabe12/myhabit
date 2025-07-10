@@ -10,7 +10,7 @@ export interface Habit {
 
 export interface CheckIn {
   id: string;
-  date: Date; // Date型で扱う
+  date: string; // Date型で扱う
   isCompleted: boolean; // 新しく追加されたフィールド
   habitId: string;
   userId: string;
