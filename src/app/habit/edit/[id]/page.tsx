@@ -7,6 +7,7 @@ import Link from "next/link";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { Habit } from "../../../types";
 
+// PrismaClient のインスタンスはファイルスコープで一度だけ作成します
 const prisma = new PrismaClient();
 
 interface HabitEditPageProps {
@@ -18,13 +19,11 @@ interface HabitEditPageProps {
 export default async function HabitEditPage({ params }: HabitEditPageProps) {
   const session = await getServerSession(authOptions);
   const id = params.id;
-  // const { id } = params; // URLから習慣IDを取得
 
   // ログインしていない場合はログインページへリダイレクト
   if (!session || !session.user || !session.user.id) {
     redirect("/login");
   }
-
 
   let habit: Habit | null = null;
   try {
@@ -37,16 +36,14 @@ export default async function HabitEditPage({ params }: HabitEditPageProps) {
     });
   } catch (error) {
     console.error("習慣の取得に失敗しました:", error);
+    // エラーハンドリングを強化: 習慣が見つからない場合と同様の表示にするなど
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <p className="text-red-600">習慣の読み込み中にエラーが発生しました。</p>
       </div>
     );
-  } finally {
-    await prisma.$disconnect();
   }
 
-  // 習慣が見つからない場合、または他のユーザーの習慣だった場合
   if (!habit) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">

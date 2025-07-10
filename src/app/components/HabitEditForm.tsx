@@ -2,9 +2,10 @@
 
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { CheckIcon } from "@heroicons/react/24/solid"; // チェックアイコン
-import { ArrowPathIcon } from "@heroicons/react/24/outline"; // ロードアイコン
+import { CheckIcon } from "@heroicons/react/24/solid";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { Habit } from "../types";
+import { DayOfWeek } from "@prisma/client";
 
 interface HabitEditFormProps {
   habit: Habit;
@@ -14,22 +15,51 @@ export default function HabitEditForm({ habit }: HabitEditFormProps) {
   const router = useRouter();
   const [name, setName] = useState(habit.name);
   const [category, setCategory] = useState(habit.category);
-  const [color, setColor] = useState(habit.color);
-  const [daysOfWeek, setDaysOfWeek] = useState<string[]>(habit.daysOfWeek);
+  const [color, setColor] = useState(habit.color ?? "");
+  const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>(habit.daysOfWeek);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const allDays = ["月", "火", "水", "木", "金", "土", "日"];
-  const categories = ["健康", "学習", "仕事", "趣味", "その他"]; // カテゴリの選択肢
+  const dayMap: { [key: string]: DayOfWeek } = {
+    "日": DayOfWeek.SUNDAY,
+    "月": DayOfWeek.MONDAY,
+    "火": DayOfWeek.TUESDAY,
+    "水": DayOfWeek.WEDNESDAY,
+    "木": DayOfWeek.THURSDAY,
+    "金": DayOfWeek.FRIDAY,
+    "土": DayOfWeek.SATURDAY,
+  };
 
-  const handleDayToggle = (day: string) => {
-    setDaysOfWeek((prevDays) =>
-      prevDays.includes(day)
-        ? prevDays.filter((d) => d !== day)
-        : [...prevDays, day].sort((a, b) => allDays.indexOf(a) - allDays.indexOf(b))
+  // 全ての曜日を日本語で表示するための配列
+  // 初期化時に正しい並び順にする
+  const allDisplayDays = ["日", "月", "火", "水", "木", "金", "土"];
+
+
+  const handleDayToggle = (displayDay: string) => {
+    const enumDay = dayMap[displayDay]; // 日本語からEnumに変換
+
+    if (enumDay === undefined) {
+      // 想定外の日本語曜日が来た場合のエラーハンドリング
+      console.error(`Unknown display day: ${displayDay}`);
+      return;
+    }
+
+    setSelectedDays((prevDays) =>
+      prevDays.includes(enumDay)
+        ? prevDays.filter((d) => d !== enumDay)
+        : [...prevDays, enumDay].sort((a, b) => {
+            // Enumの順序を定義 (例: 日月火水木金土)
+            const enumOrder = [
+              DayOfWeek.SUNDAY, DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
+              DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY
+            ];
+            return enumOrder.indexOf(a) - enumOrder.indexOf(b);
+          })
     );
   };
+
+  const categories = ["健康", "学習", "仕事", "趣味", "その他"]; // カテゴリの選択肢
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -38,7 +68,7 @@ export default function HabitEditForm({ habit }: HabitEditFormProps) {
     setSuccessMessage(null);
 
     // 必須入力チェック
-    if (!name.trim() || !category.trim() || daysOfWeek.length === 0) {
+    if (!name.trim() || !category.trim() || selectedDays.length === 0) {
       setError("習慣名、カテゴリー、実行する曜日は必須です。");
       setIsSubmitting(false);
       return;
@@ -50,7 +80,7 @@ export default function HabitEditForm({ habit }: HabitEditFormProps) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name, category, color, daysOfWeek }),
+        body: JSON.stringify({ name, category, color, daysOfWeek: selectedDays }),
       });
 
       if (!response.ok) {
@@ -62,7 +92,7 @@ export default function HabitEditForm({ habit }: HabitEditFormProps) {
       // 成功後、少し待ってから詳細ページへリダイレクト
       setTimeout(() => {
         router.push(`/habit/${habit.id}`);
-      }, 1500);
+      }, 1000);
     } catch (err: any) {
       setError(err.message || "習慣の更新中に予期せぬエラーが発生しました。");
     } finally {
@@ -72,7 +102,6 @@ export default function HabitEditForm({ habit }: HabitEditFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* 習慣名 */}
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-gray-700">
           習慣名
@@ -87,7 +116,6 @@ export default function HabitEditForm({ habit }: HabitEditFormProps) {
         />
       </div>
 
-      {/* カテゴリー */}
       <div>
         <label htmlFor="category" className="block text-sm font-medium text-gray-700">
           カテゴリー
@@ -107,7 +135,6 @@ export default function HabitEditForm({ habit }: HabitEditFormProps) {
         </select>
       </div>
 
-      {/* 色の選択 (簡易版) */}
       <div>
         <label htmlFor="color" className="block text-sm font-medium text-gray-700">
           色
@@ -115,7 +142,7 @@ export default function HabitEditForm({ habit }: HabitEditFormProps) {
         <input
           type="color"
           id="color"
-          value={color}
+          value={color ?? ""}
           onChange={(e) => setColor(e.target.value)}
           className="mt-1 block w-full h-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
         />
@@ -127,27 +154,29 @@ export default function HabitEditForm({ habit }: HabitEditFormProps) {
           実行する曜日
         </label>
         <div className="flex flex-wrap gap-2">
-          {allDays.map((day) => (
-            <button
-              key={day}
-              type="button"
-              onClick={() => handleDayToggle(day)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
-                daysOfWeek.includes(day)
-                  ? "bg-indigo-600 text-white shadow-md"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
-            >
-              {day}
-            </button>
-          ))}
+          {allDisplayDays.map((displayDay) => {
+            const enumDay = dayMap[displayDay];
+            return (
+              <button
+                key={displayDay}
+                type="button"
+                onClick={() => handleDayToggle(displayDay)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
+                  selectedDays.includes(enumDay)
+                    ? "bg-indigo-600 text-white shadow-md"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                {displayDay}
+              </button>
+            );
+          })}
         </div>
-        {daysOfWeek.length === 0 && (
+        {selectedDays.length === 0 && (
           <p className="mt-2 text-sm text-red-600">※少なくとも1つ曜日を選択してください。</p>
         )}
       </div>
 
-      {/* エラーメッセージ */}
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
           <strong className="font-bold">エラー！</strong>
@@ -155,7 +184,6 @@ export default function HabitEditForm({ habit }: HabitEditFormProps) {
         </div>
       )}
 
-      {/* 成功メッセージ */}
       {successMessage && (
         <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
           <strong className="font-bold">成功！</strong>
@@ -163,7 +191,6 @@ export default function HabitEditForm({ habit }: HabitEditFormProps) {
         </div>
       )}
 
-      {/* 送信ボタン */}
       <div className="flex justify-end">
         <button
           type="submit"
