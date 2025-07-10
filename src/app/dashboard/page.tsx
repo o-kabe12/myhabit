@@ -56,8 +56,8 @@ export default async function DashboardPage() {
 
 
   return (
-    <div className="min-h-screen bg-gray-100 py-6 sm:py-12">
-      <div className="relative py-3 sm:max-w-xl sm:mx-auto">
+    <div className="h-full flex items-center">
+      <div className="relative py-3 sm:max-w-xl sm:mx-auto w-full">
         <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-lightBlue-500 shadow-lg transform -skew-y-6 sm:skew-y-0 sm:rotate-3 sm:rounded-3xl"></div>
         <div className="relative px-4 py-10 bg-white shadow-lg sm:rounded-3xl sm:p-12">
           <div className="max-w-md mx-auto">
@@ -88,26 +88,30 @@ export default async function DashboardPage() {
                 新しい習慣
               </Link>
             </div>
+          </div>
 
-            {habits.length === 0 ? (
-              <p className="text-gray-600">まだ習慣がありません。新しい習慣を追加しましょう！</p>
-            ) : (
-              <ul className="space-y-4">
-                {habits.map((habit) => (
-                  <li key={habit.id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 flex justify-between items-center">
-                    <Link href={`/habit/${habit.id}`} className="flex-grow flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold" style={{ backgroundColor: habit.color || '#6366F1' }}>
-                          {habit.name[0]}
-                      </div>
-                      <span className="text-lg font-medium text-gray-800">{habit.name}</span>
-                    </Link>
-                    <Link href={`/habit/${habit.id}`} className="text-indigo-600 hover:text-indigo-800">
-                      <ChevronRightIcon className="h-6 w-6" />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
+          <div className="overflow-scroll max-h-[40vh]">
+            <div className="max-w-md mx-auto">
+              {habits.length === 0 ? (
+                <p className="text-gray-600">まだ習慣がありません。新しい習慣を追加しましょう！</p>
+              ) : (
+                <ul className="space-y-4">
+                  {habits.map((habit) => (
+                    <li key={habit.id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 flex justify-between items-center">
+                      <Link href={`/habit/${habit.id}`} className="flex-grow flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold" style={{ backgroundColor: habit.color || '#6366F1' }}>
+                            {habit.name[0]}
+                        </div>
+                        <span className="text-lg font-medium text-gray-800">{habit.name}</span>
+                      </Link>
+                      <Link href={`/habit/${habit.id}`} className="text-indigo-600 hover:text-indigo-800">
+                        <ChevronRightIcon className="h-6 w-6" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
         </div>
       </div>

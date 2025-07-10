@@ -4,7 +4,7 @@ import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Habit, CheckIn as CheckInType } from "../types";
 import Link from "next/link";
-import { ArrowPathIcon, ExclamationTriangleIcon,CalendarDaysIcon, TrashIcon, PencilIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, ExclamationTriangleIcon,CalendarDaysIcon, TrashIcon, PencilIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
 import useSWR from "swr";
 import DailyMemoPanel from "../components/DailyMemoPanel"; // ★追加★ DailyMemoPanelをインポート
 import CheckInButton from "./CheckInButton";
@@ -140,9 +140,15 @@ export default function HabitDetailClient({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+    <div className="md:h-full p-4 sm:p-6 lg:p-8 flex items-center">
+      <div className="w-full max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
         <div className="p-6 sm:p-8">
+          <div className="flex items-center justify-between mb-4">
+            <Link href="/dashboard" className="text-gray-600 hover:text-gray-800 flex items-center space-x-2 opacity-75 hover:opacity-100 transition-opacity duration-200">
+              <ArrowLeftIcon className="h-6 w-6" />
+              <span>ダッシュボードに戻る</span>
+            </Link>
+          </div>
           <div className="flex justify-between items-start mb-6">
             <h1 className="text-3xl font-extrabold text-gray-900 break-words max-w-[calc(100%-100px)]">
               {habit.name}
@@ -151,15 +157,11 @@ export default function HabitDetailClient({
               <Link href={`/habit/edit/${habit.id}`} className="p-2 rounded-full text-gray-500 hover:bg-gray-100 transition-colors duration-200" title="習慣を編集">
                 <PencilIcon className="h-6 w-6" />
               </Link>
-              <button onClick={handleDeleteHabit} className="p-2 rounded-full text-red-500 hover:bg-red-100 transition-colors duration-200" title="習慣を削除">
+              <button onClick={handleDeleteHabit} className="p-2 rounded-full text-red-500 hover:bg-red-100 transition-colors duration-200 cursor-pointer" title="習慣を削除">
                 <TrashIcon className="h-6 w-6" />
               </button>
             </div>
           </div>
-
-          <p className="text-gray-600 mb-6 leading-relaxed">
-            {habit.description || "説明はありません。"}
-          </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
             <div className="bg-blue-50 p-4 rounded-lg shadow-sm">

@@ -147,7 +147,7 @@ export default function DailyMemoPanel({ selectedDate }: DailyMemoPanelProps) {
           className={`px-5 py-2 rounded-md font-semibold transition-colors duration-200 flex items-center
             ${isSaving
               ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-blue-600 hover:bg-blue-700 text-white'
+              : 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
             }`}
           disabled={isSaving}
         >
@@ -160,7 +160,7 @@ export default function DailyMemoPanel({ selectedDate }: DailyMemoPanelProps) {
             className={`px-5 py-2 rounded-md font-semibold transition-colors duration-200 flex items-center
               ${isSaving
                 ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-red-600 hover:bg-red-700 text-white'
+                : 'bg-red-600 hover:bg-red-700 text-white cursor-pointer'
               }`}
             disabled={isSaving}
           >

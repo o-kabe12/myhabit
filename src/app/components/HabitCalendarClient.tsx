@@ -76,12 +76,12 @@ export default function HabitCalendarClient({ initialHabit, habitId }: HabitCale
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+    <div className="md:h-full flex items-center p-4 sm:p-6 lg:p-8">
+      <div className="w-full max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
         <div className="p-6 sm:p-8">
           <button
             onClick={() => router.push(`/habit/${habitId}`)}
-            className="text-blue-600 hover:text-blue-800 flex items-center mb-6 font-medium"
+            className="text-blue-600 hover:text-blue-800 flex items-center mb-6 font-medium cursor-pointer"
           >
             <ChevronLeftIcon className="h-5 w-5 mr-1" /> 習慣詳細に戻る
           </button>
@@ -89,23 +89,17 @@ export default function HabitCalendarClient({ initialHabit, habitId }: HabitCale
           <h1 className="text-3xl font-extrabold text-gray-900 mb-6 break-words">
             {habit.name} の達成状況
           </h1>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8"> {/* ★変更なし★ md:grid-cols-2 を維持 */}
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-                <CalendarDaysIcon className="h-7 w-7 mr-2 text-blue-500" />
-                カレンダー
-              </h2>
-              <HabitCalendar
-                habitId={habit.id}
-                onDateClick={handleDateClick}
-                selectedDate={selectedDate}
-              />
-            </div>
-
-            <div>
-              <DailyMemoPanel selectedDate={selectedDate} />
-            </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+            <CalendarDaysIcon className="h-7 w-7 mr-2 text-blue-500" />
+            カレンダー
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8 mb-4">
+            <HabitCalendar
+              habitId={habit.id}
+              onDateClick={handleDateClick}
+              selectedDate={selectedDate}
+            />
+            <DailyMemoPanel selectedDate={selectedDate} />
           </div>
         </div>
       </div>

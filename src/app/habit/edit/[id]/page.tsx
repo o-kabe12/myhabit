@@ -46,7 +46,7 @@ export default async function HabitEditPage({ params }: HabitEditPageProps) {
 
   if (!habit) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="md:h-full flex items-center justify-center">
         <div className="bg-white p-8 rounded-lg shadow-lg text-center">
           <p className="text-xl font-semibold text-gray-800 mb-4">習慣が見つかりませんでした。</p>
           <Link href="/dashboard" className="inline-flex items-center text-indigo-600 hover:text-indigo-800">
@@ -59,7 +59,7 @@ export default async function HabitEditPage({ params }: HabitEditPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-6 sm:py-12">
+    <div className="md:h-full flex items-center py-6 sm:py-12">
       <div className="relative py-3 sm:max-w-xl sm:mx-auto">
         <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-lightBlue-500 shadow-lg transform -skew-y-6 sm:skew-y-0 sm:rotate-3 sm:rounded-3xl"></div>
         <div className="relative px-4 py-10 bg-white shadow-lg sm:rounded-3xl sm:p-12">

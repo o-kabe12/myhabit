@@ -19,10 +19,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body className={inter.className + "relative bg-gray-100 min-h-screen"}>
+      <body className={inter.className + "relative bg-gray-100 min-h-screen bg-gray-100"}>
         <AuthProvider>
           <Header />
-          <main>
+          <main
+            className="h-[calc(100dvh-76px)] lg:h-[calc(100vh-72px)]">
             {children}
           </main>
         </AuthProvider>
