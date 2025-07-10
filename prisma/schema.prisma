@@ -24,15 +24,28 @@ model User {
 }
 
 model Habit {
-  id         String    @id @default(cuid())
-  name       String
-  category   String
-  color      String?
-  daysOfWeek String[]
-  userId     String
-  user       User      @relation(fields: [userId], references: [id])
-  checkIns   CheckIn[]
-  createdAt  DateTime  @default(now())
+  id          String      @id @default(cuid())
+  name        String
+  category    String
+  color       String?      // ★修正点★ color はオプションにするか、デフォルト値を設定
+  daysOfWeek  DayOfWeek[]  // ★修正点★ String[] ではなく DayOfWeek[] に変更
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  checkIns    CheckIn[]
+  createdAt   DateTime    @default(now())
+
+  // 必要に応じてユニーク制約を追加
+  // @@unique([userId, name])
+}
+
+enum DayOfWeek {
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
 }
 
 model CheckIn {

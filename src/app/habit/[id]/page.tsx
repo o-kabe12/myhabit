@@ -95,7 +95,7 @@ async function getHabitAndMemoData(habitId: string, userId: string) {
 
 interface HabitDetailPageProps {
   params: {
-    id: string;
+    id: string; // ルーティングパスが [id] の場合
   };
 }
 
@@ -106,7 +106,7 @@ export default async function HabitDetailPage({ params }: HabitDetailPageProps) 
     notFound();
   }
 
-  const { id: habitId } = params;
+  const habitId = params.id;
   const userId = session.user.id;
 
   const data = await getHabitAndMemoData(habitId, userId);

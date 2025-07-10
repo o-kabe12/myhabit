@@ -1,51 +1,70 @@
-// src/app/api/habits/route.ts
+import { PrismaClient, DayOfWeek } from "@prisma/client";
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]/route"; // authOptionsをインポート
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-const prisma = new PrismaClient();
+declare global {
+  var prisma: PrismaClient | undefined;
+}
 
-export async function POST(req: Request) {
+const prisma = global.prisma || new PrismaClient();
+if (process.env.NODE_ENV === "development") global.prisma = prisma;
+
+// POSTリクエストハンドラー (新しい習慣の作成)
+export async function POST(request: Request) {
+  const session = await getServerSession(authOptions);
+
+  if (!session || !session.user || !session.user.id) {
+    return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+  }
+
+  const { name, category, color, daysOfWeek } = await request.json();
+
+  // 入力値のバリデーション
+  if (!name || !category || !color || !daysOfWeek || !Array.isArray(daysOfWeek)) {
+    return NextResponse.json({ error: "必須項目が不足しています。" }, { status: 400 });
+  }
+
+  // ★修正点★ 日本語の曜日をPrismaのEnumに変換するヘルパー関数
+  const mapJapaneseDayToEnum = (japaneseDay: string): DayOfWeek | undefined => {
+    switch (japaneseDay) {
+      case '日': return DayOfWeek.SUNDAY;
+      case '月': return DayOfWeek.MONDAY;
+      case '火': return DayOfWeek.TUESDAY;
+      case '水': return DayOfWeek.WEDNESDAY;
+      case '木': return DayOfWeek.THURSDAY;
+      case '金': return DayOfWeek.FRIDAY;
+      case '土': return DayOfWeek.SATURDAY;
+      default: return undefined; // 無効な値
+    }
+  };
+
+  // ★修正点★ daysOfWeek を変換
+  const transformedDaysOfWeek = daysOfWeek
+    .map(mapJapaneseDayToEnum)
+    .filter((day): day is DayOfWeek => day !== undefined); // undefined を除外
+
+  // 変換後にdaysOfWeekが空になった場合のエラーハンドリング
+  if (daysOfWeek.length > 0 && transformedDaysOfWeek.length === 0) {
+    return NextResponse.json({ error: "無効な曜日の指定が含まれています。" }, { status: 400 });
+  }
+
   try {
-    // ユーザー認証の確認
-    const session = await getServerSession(authOptions);
-
-    if (!session || !session.user || !session.user.id) {
-      return NextResponse.json({ message: "認証が必要です。" }, { status: 401 });
-    }
-
-    const { name, category, color, daysOfWeek } = await req.json();
-
-    // 入力値のバリデーション
-    if (!name || typeof name !== "string" || name.trim() === "") {
-      return NextResponse.json({ message: "習慣名は必須です。" }, { status: 400 });
-    }
-    if (!category || typeof category !== "string") {
-      return NextResponse.json({ message: "カテゴリは必須です。" }, { status: 400 });
-    }
-    if (!Array.isArray(daysOfWeek) || daysOfWeek.length === 0) {
-      return NextResponse.json({ message: "実行する曜日を少なくとも1つ選択してください。" }, { status: 400 });
-    }
-    // daysOfWeek の要素が有効な曜日かどうかの追加検証も可能
-
     // データベースに習慣を保存
     const newHabit = await prisma.habit.create({
       data: {
         name,
         category,
         color,
-        daysOfWeek,
-        userId: session.user.id, // ログイン中のユーザーIDを設定
+        daysOfWeek: transformedDaysOfWeek, // 変換後の配列を渡す
+        userId: session.user.id,
       },
     });
-
-    return NextResponse.json(newHabit, { status: 201 }); // 201 Created
+    return NextResponse.json(newHabit, { status: 201 });
   } catch (error) {
     console.error("習慣登録エラー:", error);
-    return NextResponse.json(
-      { message: "習慣の登録中にエラーが発生しました。", error: (error as Error).message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "習慣の登録に失敗しました。" }, { status: 500 });
+  } finally {
+    await prisma.$disconnect();
   }
 }
