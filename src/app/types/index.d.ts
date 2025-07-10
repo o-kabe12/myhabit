@@ -6,6 +6,7 @@ export interface Habit {
   daysOfWeek: string[];
   userId: string;
   createdAt: Date;
+  description?: string; 
 }
 
 export interface CheckIn {
