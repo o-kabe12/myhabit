@@ -1,7 +1,6 @@
-// src/components/CheckInButton.tsx
 "use client";
 
-import { useState, useEffect } from "react"; // useEffect を再導入
+import { useState, useEffect } from "react";
 import { CheckCircleIcon, XCircleIcon, ArrowPathIcon } from "@heroicons/react/24/solid";
 import { CheckCircleIcon as OutlineCheckCircleIcon } from "@heroicons/react/24/outline";
 import useSWR, { mutate as globalMutate } from "swr";
@@ -40,7 +39,6 @@ export default function CheckInButton({ habitId, date }: CheckInButtonProps) {
   // APIリクエスト中のローディング状態を別途管理
   const [isMutating, setIsMutating] = useState(false);
 
-  // ★修正点★ SWRのデータが更新されたら、UI表示用のstateも更新する useEffect
   useEffect(() => {
     // isLoading が false になり、かつ data が undefined でなければ（つまりデータ取得が完了したら）
     if (!isLoading && data !== undefined) {
@@ -121,7 +119,7 @@ export default function CheckInButton({ habitId, date }: CheckInButtonProps) {
   return (
     <button
       onClick={handleCheckInToggle}
-      className={`flex items-center px-6 py-3 rounded-full font-bold transition-all duration-200 transform ${
+      className={`flex items-center px-6 py-3 rounded-full font-bold transition-all duration-200 transform cursor-pointer ${
         currentIsCheckedIn
           ? "bg-green-500 hover:bg-green-600 text-white shadow-lg scale-105"
           : "bg-gray-200 hover:bg-gray-300 text-gray-700 shadow-md"

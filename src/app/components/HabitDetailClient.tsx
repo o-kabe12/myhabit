@@ -2,11 +2,12 @@
 
 import { useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Habit, CheckIn as CheckInType } from "@/types";
+import { Habit, CheckIn as CheckInType } from "../types";
 import Link from "next/link";
-import { ArrowPathIcon, ExclamationTriangleIcon, CheckCircleIcon, XCircleIcon, CalendarDaysIcon, TrashIcon, PencilIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, ExclamationTriangleIcon,CalendarDaysIcon, TrashIcon, PencilIcon } from "@heroicons/react/24/outline";
 import useSWR from "swr";
 import DailyMemoPanel from "../components/DailyMemoPanel"; // ★追加★ DailyMemoPanelをインポート
+import CheckInButton from "./CheckInButton";
 
 // データフェッチ関数 (SWR用)
 const fetcher = async (url: string) => {
@@ -195,30 +196,13 @@ export default function HabitDetailClient({
             </h3>
           </div>
 
-          <div className="flex justify-center mb-8">
-            <button
-              onClick={handleCheckInToggle}
-              className={`flex items-center px-8 py-4 rounded-full text-lg font-bold transition-all duration-300 shadow-md
-                ${isCheckedIn
-                  ? "bg-green-500 hover:bg-green-600 text-white"
-                  : "bg-blue-500 hover:bg-blue-600 text-white"
-                }
-              `}
-              disabled={checkInLoading}
-            >
-              {checkInLoading ? (
-                <ArrowPathIcon className="animate-spin h-6 w-6 mr-3" />
-              ) : isCheckedIn ? (
-                <CheckCircleIcon className="h-6 w-6 mr-3" />
-              ) : (
-                <XCircleIcon className="h-6 w-6 mr-3" />
-              )}
-              {isCheckedIn ? "チェックイン済み (解除)" : "今日のチェックイン"}
-            </button>
+
+          <div className="mt-8 flex justify-center mt-8">
+            <CheckInButton habitId={habit.id} date={todayFormatted}/>
           </div>
 
           <div className="mt-8">
-            <DailyMemoPanel selectedDate={todayFormatted} initialMemoContent={initialMemoContent} />
+            <DailyMemoPanel selectedDate={todayFormatted} />
           </div>
 
           <div className="text-center mt-6">
