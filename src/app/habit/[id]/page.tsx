@@ -1,19 +1,22 @@
+// src/app/habit/[id]/page.tsx
+
 import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { PrismaClient } from "@prisma/client";
-import HabitDetailClient from "../../components/HabitDetailClient"; // 新しく作成したクライアントコンポーネントをインポート
+import HabitDetailClient from "../../components/HabitDetailClient";
 
 const prisma = new PrismaClient();
 
-// データフェッチ関数
-async function getHabitData(habitId: string, userId: string) { // habitId は既にstringとして渡される
-  const today = new Date();
-  const todayFormatted = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+// ヘルパー関数：日付のみのUTC Dateオブジェクトを取得
+const getUtcDateOnly = (date: Date) => {
+  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+};
 
-  const getUtcDateOnly = (date: Date) => {
-    return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  };
+// データフェッチ関数
+async function getHabitAndMemoData(habitId: string, userId: string) {
+  const today = new Date();
+  const todayUtc = getUtcDateOnly(today);
 
   try {
     const habit = await prisma.habit.findUnique({
@@ -29,7 +32,7 @@ async function getHabitData(habitId: string, userId: string) { // habitId は既
         userId_habitId_date: {
           userId: userId,
           habitId: habitId,
-          date: getUtcDateOnly(today),
+          date: todayUtc,
         },
       },
       select: {
@@ -37,12 +40,26 @@ async function getHabitData(habitId: string, userId: string) { // habitId は既
       },
     });
 
+    const dailyMemo = await prisma.dailyMemo.findUnique({
+      where: {
+        userId_date: {
+          userId: userId,
+          date: todayUtc,
+        },
+      },
+      select: {
+        content: true,
+      },
+    });
+
+    // ストリーク計算ロジック（APIと同じロジックをここに複製）
     let currentStreak = 0;
+    // 今日のチェックインが完了していればストリーク開始
     if (checkIn && checkIn.isCompleted) {
         currentStreak = 1;
-        let checkDate = getUtcDateOnly(new Date());
+        let checkDate = getUtcDateOnly(new Date()); // 今日の日付から開始
         while (true) {
-            checkDate.setDate(checkDate.getDate() - 1);
+            checkDate.setDate(checkDate.getDate() - 1); // 前日に移動
             const previousDayCheckIn = await prisma.checkIn.findUnique({
                 where: {
                     userId_habitId_date: {
@@ -59,6 +76,7 @@ async function getHabitData(habitId: string, userId: string) { // habitId は既
             if (previousDayCheckIn && previousDayCheckIn.isCompleted) {
                 currentStreak++;
             } else {
+                // 前日が未完了ならストリーク終了
                 break;
             }
         }
@@ -69,6 +87,8 @@ async function getHabitData(habitId: string, userId: string) { // habitId は既
       habit,
       isCheckedIn: checkIn?.isCompleted || false,
       streak: currentStreak,
+      initialMemoContent: dailyMemo?.content || "", // ★追加★ メモの内容を渡す (ない場合は空文字列)
+      todayFormatted: `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`, // ★追加★ 日付も渡す
     };
   } catch (error) {
     console.error("Failed to fetch habit data on server:", error);
@@ -77,7 +97,6 @@ async function getHabitData(habitId: string, userId: string) { // habitId は既
     await prisma.$disconnect();
   }
 }
-
 
 
 interface HabitDetailPageProps {
@@ -93,15 +112,13 @@ export default async function HabitDetailPage({ params }: HabitDetailPageProps) 
     notFound();
   }
 
-
-
   const { id: habitId } = params;
   const userId = session.user.id;
 
-  const data = await getHabitData(habitId, userId);
+  const data = await getHabitAndMemoData(habitId, userId);
 
   if (!data || !data.habit) {
-    notFound(); // 習慣が見つからない場合は404ページを表示
+    notFound();
   }
 
   return (
@@ -110,6 +127,8 @@ export default async function HabitDetailPage({ params }: HabitDetailPageProps) 
       initialIsCheckedIn={data.isCheckedIn}
       initialStreak={data.streak}
       habitId={habitId}
+      initialMemoContent={data.initialMemoContent}
+      todayFormatted={data.todayFormatted}
     />
   );
 }

@@ -2,16 +2,18 @@
 
 import { useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Habit, CheckIn as CheckInType } from "../types"; // CheckInTypeとしてインポート
+import { Habit, CheckIn as CheckInType } from "@/types";
 import Link from "next/link";
 import { ArrowPathIcon, ExclamationTriangleIcon, CheckCircleIcon, XCircleIcon, CalendarDaysIcon, TrashIcon, PencilIcon } from "@heroicons/react/24/outline";
 import useSWR from "swr";
+import DailyMemoPanel from "../components/DailyMemoPanel"; // ★追加★ DailyMemoPanelをインポート
 
 // データフェッチ関数 (SWR用)
 const fetcher = async (url: string) => {
   const res = await fetch(url);
   if (!res.ok) {
-    throw new Error('Failed to fetch data');
+    const errorData = await res.json();
+    throw new Error(errorData.error || 'Failed to fetch data');
   }
   return res.json();
 };
@@ -21,6 +23,8 @@ interface HabitDetailClientProps {
   initialIsCheckedIn: boolean;
   initialStreak: number;
   habitId: string;
+  initialMemoContent: string;
+  todayFormatted: string;
 }
 
 export default function HabitDetailClient({
@@ -28,29 +32,28 @@ export default function HabitDetailClient({
   initialIsCheckedIn,
   initialStreak,
   habitId,
+  initialMemoContent,
+  todayFormatted,
 }: HabitDetailClientProps) {
   const router = useRouter();
-  const today = new Date();
-  const todayFormatted = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
 
   // SWRでリアルタイム更新が必要な部分のみをフェッチする
-  // initialDataを渡すことで、初回はサーバーから渡されたデータを使用
   const { data: habit, error: habitError, isLoading: habitLoading, mutate: mutateHabit } = useSWR<Habit>(
     `/api/habit/${habitId}`,
     fetcher,
-    { fallbackData: initialHabit } // ★初期データを渡す★
+    { fallbackData: initialHabit }
   );
 
   const { data: checkInStatus, error: checkInError, isLoading: checkInLoading, mutate: mutateCheckIn } = useSWR<{ isCheckedIn: boolean }>(
     `/api/checkin/${todayFormatted}/${habitId}`,
     fetcher,
-    { fallbackData: { isCheckedIn: initialIsCheckedIn } } // ★初期データを渡す★
+    { fallbackData: { isCheckedIn: initialIsCheckedIn } }
   );
 
   const { data: streakData, error: streakError, isLoading: streakLoading, mutate: mutateStreak } = useSWR<{ streak: number }>(
     `/api/habit/${habitId}/streak`,
     fetcher,
-    { fallbackData: { streak: initialStreak } } // ★初期データを渡す★
+    { fallbackData: { streak: initialStreak } }
   );
 
   const isCheckedIn = checkInStatus?.isCheckedIn;
@@ -105,8 +108,6 @@ export default function HabitDetailClient({
     }
   }, [habitId, router]);
 
-  // ローディング状態はSWRの初回フェッチ時のみ表示されるため、サーバー側でデータを取得している場合は不要
-  // ただし、SWRの再検証中にLoading状態を一時的に表示する場合は考慮
   if (habitLoading && !habit || checkInLoading && !checkInStatus || streakLoading && !streakData) {
     return (
       <div className="flex justify-center items-center h-screen text-gray-600">
@@ -155,9 +156,9 @@ export default function HabitDetailClient({
             </div>
           </div>
 
-          {/* <p className="text-gray-600 mb-6 leading-relaxed">
+          <p className="text-gray-600 mb-6 leading-relaxed">
             {habit.description || "説明はありません。"}
-          </p> */}
+          </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
             <div className="bg-blue-50 p-4 rounded-lg shadow-sm">
@@ -214,6 +215,10 @@ export default function HabitDetailClient({
               )}
               {isCheckedIn ? "チェックイン済み (解除)" : "今日のチェックイン"}
             </button>
+          </div>
+
+          <div className="mt-8">
+            <DailyMemoPanel selectedDate={todayFormatted} initialMemoContent={initialMemoContent} />
           </div>
 
           <div className="text-center mt-6">

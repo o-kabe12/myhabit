@@ -27,13 +27,13 @@ export default function DailyMemoPanel({ selectedDate }: DailyMemoPanelProps) {
 
   // SWRでメモデータを取得
   const { data: memoData, error, isLoading, mutate } = useSWR<{ content: string }>(
-    selectedDate ? apiUrl : null, // selectedDateがある場合のみフェッチ
+    selectedDate ? apiUrl : null,
     fetcher
   );
 
   // memoDataが変更されたら、memoContentを更新
   useEffect(() => {
-    if (memoData) {
+    if (memoData && memoData.content !== undefined) {
       setMemoContent(memoData.content);
     } else {
       setMemoContent(''); // データがない場合は空にする
@@ -41,12 +41,13 @@ export default function DailyMemoPanel({ selectedDate }: DailyMemoPanelProps) {
     setSaveStatus('idle'); // 新しい日付に切り替わったらステータスをリセット
   }, [memoData, selectedDate]);
 
+
   const handleSaveMemo = useCallback(async () => {
     setIsSaving(true);
     setSaveStatus('idle');
     try {
       const res = await fetch(apiUrl, {
-        method: 'PUT', // PUTで存在すれば更新、なければ作成 (upsert)
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -59,16 +60,13 @@ export default function DailyMemoPanel({ selectedDate }: DailyMemoPanelProps) {
       }
 
       setSaveStatus('success');
-      // SWRキャッシュを更新して最新の状態を反映
       mutate();
     } catch (err) {
       console.error("メモ保存エラー:", err);
       setSaveStatus('error');
-      // 必要であればユーザーにアラート
       alert(`メモの保存中にエラーが発生しました: ${(err as Error).message}`);
     } finally {
       setIsSaving(false);
-      // 一定時間後にステータスをリセット
       setTimeout(() => setSaveStatus('idle'), 3000);
     }
   }, [apiUrl, memoContent, mutate]);
@@ -89,9 +87,9 @@ export default function DailyMemoPanel({ selectedDate }: DailyMemoPanelProps) {
         throw new Error(errorData.error || 'メモの削除に失敗しました。');
       }
 
-      setMemoContent(''); // 削除成功したら内容を空にする
+      setMemoContent('');
       setSaveStatus('success');
-      mutate(); // SWRキャッシュを更新
+      mutate();
 
     } catch (err) {
       console.error("メモ削除エラー:", err);
@@ -156,7 +154,7 @@ export default function DailyMemoPanel({ selectedDate }: DailyMemoPanelProps) {
           {isSaving && <ArrowPathIcon className="animate-spin h-5 w-5 mr-2" />}
           保存
         </button>
-        {memoContent && ( // メモ内容がある場合のみ削除ボタンを表示
+        {memoContent && (
           <button
             onClick={handleDeleteMemo}
             className={`px-5 py-2 rounded-md font-semibold transition-colors duration-200 flex items-center
@@ -166,7 +164,7 @@ export default function DailyMemoPanel({ selectedDate }: DailyMemoPanelProps) {
               }`}
             disabled={isSaving}
           >
-            {isSaving && <ArrowPathIcon className="animate-spin h-5 w-5 mr-2" />}
+            {isSaving && <ArrowPathIcon className="h-5 w-5 mr-2" />}
             削除
           </button>
         )}

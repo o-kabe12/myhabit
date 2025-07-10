@@ -1,4 +1,3 @@
-// src/components/HabitCalendarClient.tsx
 "use client";
 
 import { useState, useCallback } from 'react';
@@ -20,14 +19,13 @@ const fetcher = async (url: string) => {
 };
 
 interface HabitCalendarClientProps {
-  initialHabit: Habit; // サーバーから渡される初期の習慣データ
+  initialHabit: Habit;
   habitId: string;
 }
 
 export default function HabitCalendarClient({ initialHabit, habitId }: HabitCalendarClientProps) {
   const router = useRouter();
 
-  // 今日の日付をYYYY-MM-DD形式で取得
   const getTodayFormatted = () => {
     const today = new Date();
     return `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
@@ -47,7 +45,7 @@ export default function HabitCalendarClient({ initialHabit, habitId }: HabitCale
     setSelectedDate(formattedDate);
   }, []);
 
-  if (habitLoading && !habit) { // initialHabitがある場合はローディングを表示しない
+  if (habitLoading && !habit) {
     return (
       <div className="flex justify-center items-center h-screen text-gray-600">
         <ArrowPathIcon className="animate-spin h-10 w-10 mr-3" />
@@ -61,7 +59,7 @@ export default function HabitCalendarClient({ initialHabit, habitId }: HabitCale
       <div className="flex flex-col items-center justify-center h-screen text-red-600">
         <ExclamationTriangleIcon className="h-12 w-12 mb-4" />
         <p>習慣データの読み込み中にエラーが発生しました。</p>
-        <button onClick={() => mutateHabit()} // SWRの再取得を試みる
+        <button onClick={() => mutateHabit()}
                 className="mt-4 px-6 py-3 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition duration-200">
           再試行
         </button>
@@ -92,7 +90,7 @@ export default function HabitCalendarClient({ initialHabit, habitId }: HabitCale
             {habit.name} の達成状況
           </h1>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8"> {/* ★変更なし★ md:grid-cols-2 を維持 */}
             <div>
               <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
                 <CalendarDaysIcon className="h-7 w-7 mr-2 text-blue-500" />
