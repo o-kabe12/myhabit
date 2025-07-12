@@ -76,13 +76,13 @@ export default function CheckInButton({ habitId, date }: CheckInButtonProps) {
       const calendarApiUrl = `/api/checkin/calendar/${habitId}?startDate=${currentMonthStartDate}&endDate=${currentMonthEndDate}`;
       globalMutate(calendarApiUrl, { revalidate: true }); // カレンダーはバックグラウンドで最新状態を取得
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to toggle check-in:", err);
       // エラーが発生した場合、UIを元の状態に戻す
       setDisplayCheckedIn(previousState);
       // SWRのキャッシュも元の状態に戻す（または再検証してエラーをUIに表示）
       mutate(undefined, { revalidate: true }); // キャッシュをクリアし、再検証してエラーを表示させる
-      alert(err.message || "チェックインの更新中にエラーが発生しました。");
+      alert((err instanceof Error ? err.message : "チェックインの更新中にエラーが発生しました。"));
     } finally {
       setIsMutating(false); // APIリクエスト終了
     }

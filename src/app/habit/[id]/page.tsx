@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/app/api/auth/authOptions";
 import { PrismaClient } from "@prisma/client";
 import HabitDetailClient from "../../components/HabitDetailClient";
 
@@ -55,7 +55,8 @@ async function getHabitAndMemoData(habitId: string, userId: string) {
     let currentStreak = 0;
     if (checkIn && checkIn.isCompleted) {
         currentStreak = 1;
-        let checkDate = getUtcDateOnly(new Date());
+        // eslint-disable-next-line prefer-const
+        let checkDate = getUtcDateOnly(new Date()); // ループで再代入されるのでletのまま
         while (true) {
             checkDate.setDate(checkDate.getDate() - 1);
             const previousDayCheckIn = await prisma.checkIn.findUnique({
@@ -94,9 +95,9 @@ async function getHabitAndMemoData(habitId: string, userId: string) {
 
 
 interface HabitDetailPageProps {
-  params: {
+  params: Promise<{
     id: string; // ルーティングパスが [id] の場合
-  };
+  }>;
 }
 
 export default async function HabitDetailPage({ params }: HabitDetailPageProps) {
@@ -106,7 +107,7 @@ export default async function HabitDetailPage({ params }: HabitDetailPageProps) 
     notFound();
   }
 
-  const habitId = params.id;
+  const { id: habitId } = await params;
   const userId = session.user.id;
 
   const data = await getHabitAndMemoData(habitId, userId);
@@ -121,7 +122,6 @@ export default async function HabitDetailPage({ params }: HabitDetailPageProps) 
       initialIsCheckedIn={data.isCheckedIn}
       initialStreak={data.streak}
       habitId={habitId}
-      initialMemoContent={data.initialMemoContent}
       todayFormatted={data.todayFormatted}
     />
   );

@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/app/api/auth/authOptions";
 import { redirect } from "next/navigation";
 import { PrismaClient } from "@prisma/client";
 import HabitEditForm from "../../../components/HabitEditForm";
@@ -11,14 +11,14 @@ import { Habit } from "../../../types";
 const prisma = new PrismaClient();
 
 interface HabitEditPageProps {
-  params: {
+  params: Promise<{
     id: string; // URLパスから取得する習慣ID
-  };
+  }>;
 }
 
 export default async function HabitEditPage({ params }: HabitEditPageProps) {
   const session = await getServerSession(authOptions);
-  const id = params.id;
+  const { id } = await params;
 
   // ログインしていない場合はログインページへリダイレクト
   if (!session || !session.user || !session.user.id) {

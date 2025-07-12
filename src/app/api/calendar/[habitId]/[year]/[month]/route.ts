@@ -1,14 +1,23 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/app/api/auth/authOptions";
 
-const prisma = new PrismaClient();
+declare global {
+  var prisma: PrismaClient | undefined;
+}
 
-export async function GET(
-  request: Request,
-  { params }: { params: { habitId: string; year: string; month: string } }
-) {
+const prisma = global.prisma || new PrismaClient();
+if (process.env.NODE_ENV === "development") global.prisma = prisma;
+
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const pathParts = url.pathname.split("/");
+  // 末尾から3つ前がhabitId, 2つ前がyear, 1つ前がmonth
+  const habitId = pathParts[pathParts.length - 3];
+  const year = pathParts[pathParts.length - 2];
+  const month = pathParts[pathParts.length - 1];
+
   const session = await getServerSession(authOptions);
 
   if (!session || !session.user || !session.user.id) {
@@ -16,7 +25,6 @@ export async function GET(
   }
 
   const userId = session.user.id;
-  const { habitId, year, month } = params;
 
   const targetYear = parseInt(year, 10);
   const targetMonth = parseInt(month, 10); // 1-indexed (例: 7月は7)
@@ -60,7 +68,5 @@ export async function GET(
   } catch (error) {
     console.error("カレンダーデータ取得エラー:", error);
     return NextResponse.json({ error: "カレンダーデータの取得に失敗しました。" }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
 }

@@ -16,7 +16,7 @@ export default function HabitEditForm({ habit }: HabitEditFormProps) {
   const [name, setName] = useState(habit.name);
   const [category, setCategory] = useState(habit.category);
   const [color, setColor] = useState(habit.color ?? "");
-  const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>(habit.daysOfWeek);
+  const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>(habit.daysOfWeek as DayOfWeek[]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -93,8 +93,8 @@ export default function HabitEditForm({ habit }: HabitEditFormProps) {
       setTimeout(() => {
         router.push(`/habit/${habit.id}`);
       }, 1000);
-    } catch (err: any) {
-      setError(err.message || "習慣の更新中に予期せぬエラーが発生しました。");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "習慣の更新中に予期せぬエラーが発生しました。");
     } finally {
       setIsSubmitting(false);
     }

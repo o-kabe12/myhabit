@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/app/api/auth/authOptions";
 import { PrismaClient } from "@prisma/client";
 import HabitCalendarClient from "../../../components/HabitCalendarClient";
 
@@ -23,20 +23,14 @@ async function getHabitData(habitId: string, userId: string) {
   }
 }
 
-interface HabitCalendarPageProps {
-  params: {
-    id: string; // 習慣のID
-  };
-}
-
-export default async function HabitCalendarPage({ params }: HabitCalendarPageProps) {
+export default async function HabitCalendarPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
 
   if (!session || !session.user || !session.user.id) {
     notFound();
   }
 
-  const habitId = params.id;
+  const { id: habitId } = await params;
   const userId = session.user.id;
 
   const habit = await getHabitData(habitId, userId);

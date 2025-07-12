@@ -14,7 +14,7 @@ export default function NewHabitPage() {
   const [error, setError] = useState<string | null>(null);
 
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
 
   // 認証状態のチェック
   if (status === "loading") {
@@ -66,8 +66,12 @@ export default function NewHabitPage() {
 
       // 成功したらダッシュボードへリダイレクト
       router.push("/dashboard");
-    } catch (err: any) {
-      setError(err.message || "予期せぬエラーが発生しました。");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || "予期せぬエラーが発生しました。");
+      } else {
+        setError("予期せぬエラーが発生しました。");
+      }
     } finally {
       setLoading(false);
     }

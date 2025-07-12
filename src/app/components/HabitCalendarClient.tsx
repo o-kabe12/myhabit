@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowPathIcon, ExclamationTriangleIcon, CalendarDaysIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, ExclamationTriangleIcon, CalendarDaysIcon, ChevronLeftIcon } from '@heroicons/react/24/outline';
 import useSWR from 'swr';
 import { Habit } from '../types';
 import HabitCalendar from '../components/HabitCalendar';

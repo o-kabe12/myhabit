@@ -8,9 +8,10 @@ import { ArrowPathIcon } from "@heroicons/react/24/solid";
 
 interface DeleteHabitButtonProps {
   habitId: string;
+  onDelete?: () => void;
 }
 
-export default function DeleteHabitButton({ habitId }: DeleteHabitButtonProps) {
+export default function DeleteHabitButton({ habitId, onDelete }: DeleteHabitButtonProps) {
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -33,14 +34,14 @@ export default function DeleteHabitButton({ habitId }: DeleteHabitButtonProps) {
       }
 
       setSuccess("習慣が正常に削除されました。");
-      // 成功後、少し待ってからダッシュボードへリダイレクト
       setTimeout(() => {
+        if (onDelete) onDelete();
         router.push("/dashboard");
-        router.refresh(); // ダッシュボードのデータを再フェッチ
+        router.refresh();
       }, 1500);
 
-    } catch (err: any) {
-      setError(err.message || "習慣の削除中に予期せぬエラーが発生しました。");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "習慣の削除中に予期せぬエラーが発生しました。");
     } finally {
       setIsDeleting(false);
       // 成功時以外はモーダルを閉じる

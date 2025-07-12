@@ -1,7 +1,7 @@
 import { PrismaClient, DayOfWeek } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/app/api/auth/authOptions";
 
 declare global {
   var prisma: PrismaClient | undefined;

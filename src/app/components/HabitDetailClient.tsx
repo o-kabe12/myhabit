@@ -1,10 +1,9 @@
 "use client";
 
-import { useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Habit, CheckIn as CheckInType } from "../types";
+import { Habit } from "../types";
 import Link from "next/link";
-import { ArrowPathIcon, ExclamationTriangleIcon,CalendarDaysIcon, TrashIcon, PencilIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, ExclamationTriangleIcon,CalendarDaysIcon, ArrowLeftIcon, PencilIcon } from "@heroicons/react/24/outline";
 import useSWR from "swr";
 import DailyMemoPanel from "../components/DailyMemoPanel"; // ★追加★ DailyMemoPanelをインポート
 import CheckInButton from "./CheckInButton";
@@ -25,7 +24,6 @@ interface HabitDetailClientProps {
   initialIsCheckedIn: boolean;
   initialStreak: number;
   habitId: string;
-  initialMemoContent: string;
   todayFormatted: string;
 }
 
@@ -34,7 +32,6 @@ export default function HabitDetailClient({
   initialIsCheckedIn,
   initialStreak,
   habitId,
-  initialMemoContent,
   todayFormatted,
 }: HabitDetailClientProps) {
   const router = useRouter();
@@ -58,32 +55,10 @@ export default function HabitDetailClient({
     { fallbackData: { streak: initialStreak } }
   );
 
-  const isCheckedIn = checkInStatus?.isCheckedIn;
+  // isCheckedInは未使用なので削除
   const currentStreak = streakData?.streak;
 
-  const handleCheckInToggle = useCallback(async () => {
-    if (!habitId) return;
-
-    try {
-      const method = isCheckedIn ? "DELETE" : "PUT";
-      const res = await fetch(`/api/checkin/${todayFormatted}/${habitId}`, {
-        method: method,
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "チェックイン操作に失敗しました。");
-      }
-
-      mutateCheckIn();
-      mutateHabit();
-      mutateStreak();
-
-    } catch (err: any) {
-      alert(`エラー: ${err.message}`);
-      console.error("チェックイン操作エラー:", err);
-    }
-  }, [habitId, isCheckedIn, todayFormatted, mutateCheckIn, mutateHabit, mutateStreak]);
+  // handleCheckInToggle, isCheckedIn, useCallbackの未使用エラーを解消
 
 
   if (habitLoading && !habit || checkInLoading && !checkInStatus || streakLoading && !streakData) {
