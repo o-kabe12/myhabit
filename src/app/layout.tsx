@@ -10,6 +10,26 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "MyHabit App",
   description: "毎日を記録し、自己成長をサポートする習慣トラッカー",
+  openGraph: {
+    title: "MyHabit App",
+    description: "毎日を記録し、自己成長をサポートする習慣トラッカー",
+    url: "https://myhabit-dusky.vercel.app/",
+    type: "website",
+    images: [
+      {
+        url: "https://myhabit-dusky.vercel.app/ogp.jpg",
+        width: 1200,
+        height: 630,
+        alt: "MyHabit App OGP"
+      }
+    ]
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MyHabit App",
+    description: "毎日を記録し、自己成長をサポートする習慣トラッカー",
+    images: ["https://myhabit-dusky.vercel.app/ogp.jpg"]
+  }
 };
 
 export default function RootLayout({
