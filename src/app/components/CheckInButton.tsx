@@ -8,6 +8,7 @@ import useSWR, { mutate as globalMutate } from "swr";
 interface CheckInButtonProps {
   habitId: string;
   date: string; // 'YYYY-MM-DD'
+  initialIsCheckedIn: boolean; 
 }
 
 // データフェッチ関数 (SWR用)
@@ -28,7 +29,8 @@ const formatDateToYYYYMMDD = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
-export default function CheckInButton({ habitId, date }: CheckInButtonProps) {
+// 修正点: CheckInButton 関数が initialIsCheckedIn を受け取るように変更
+export default function CheckInButton({ habitId, date, initialIsCheckedIn }: CheckInButtonProps) {
   const checkInApiUrl = (habitId && date) ? `/api/checkin/${date}/${habitId}` : null;
 
   // SWRが扱うデータの型をAPIのレスポンスに合わせて <{ isCompleted: boolean }> に修正
@@ -38,6 +40,7 @@ export default function CheckInButton({ habitId, date }: CheckInButtonProps) {
     {
       revalidateOnMount: true,
       revalidateOnFocus: false,
+      fallbackData: { isCompleted: initialIsCheckedIn }
     }
   );
 
@@ -120,7 +123,7 @@ export default function CheckInButton({ habitId, date }: CheckInButtonProps) {
   }
 
   // 最終的な表示状態の判定も正しいプロパティ名(isCompleted)から取得
-  const isCheckedIn = data?.isCompleted ?? false;
+  const isCheckedIn = data?.isCompleted ?? initialIsCheckedIn; // SWRのデータがない場合は初期値を使用
 
   return (
     <button
