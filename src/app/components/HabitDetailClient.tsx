@@ -8,6 +8,7 @@ import { ArrowPathIcon, ExclamationTriangleIcon,CalendarDaysIcon, TrashIcon, Pen
 import useSWR from "swr";
 import DailyMemoPanel from "../components/DailyMemoPanel"; // ★追加★ DailyMemoPanelをインポート
 import CheckInButton from "./CheckInButton";
+import DeleteHabitButton from "./DeleteHabitButton";
 
 // データフェッチ関数 (SWR用)
 const fetcher = async (url: string) => {
@@ -84,30 +85,6 @@ export default function HabitDetailClient({
     }
   }, [habitId, isCheckedIn, todayFormatted, mutateCheckIn, mutateHabit, mutateStreak]);
 
-  const handleDeleteHabit = useCallback(async () => {
-    if (!confirm("この習慣を本当に削除しますか？関連する全てのチェックイン記録も削除されます。")) {
-      return;
-    }
-    if (!habitId) return;
-
-    try {
-      const res = await fetch(`/api/habit/${habitId}`, {
-        method: "DELETE",
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "習慣の削除に失敗しました。");
-      }
-
-      alert("習慣が正常に削除されました。");
-      router.push("/dashboard");
-
-    } catch (err: any) {
-      alert(`エラー: ${err.message}`);
-      console.error("習慣削除エラー:", err);
-    }
-  }, [habitId, router]);
 
   if (habitLoading && !habit || checkInLoading && !checkInStatus || streakLoading && !streakData) {
     return (
@@ -140,9 +117,10 @@ export default function HabitDetailClient({
   }
 
   return (
-    <div className="md:h-full p-4 sm:p-6 lg:p-8 flex items-center">
-      <div className="w-full h-[85dvh] max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-scroll">
-        <div className="p-6 sm:p-8">
+    <div className="h-[90dvh] md:h-full p-4 sm:p-6 lg:p-8 flex items-center">
+      <div className="w-full h-[80dvh] sm:h-[75dvh] max-w-4xl mx-auto relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-lightBlue-500 shadow-lg transform -skew-y-6 sm:skew-y-0 sm:rotate-3 sm:rounded-3xl"></div>
+        <div className="p-6 sm:p-8 rounded-xl shadow-lg relative bg-white sm:rounded-3xl h-[80dvh] sm:h-[75dvh] overflow-scroll">
           <div className="flex items-center justify-between mb-4">
             <Link href="/dashboard" className="text-gray-600 hover:text-gray-800 flex items-center space-x-2 opacity-75 hover:opacity-100 transition-opacity duration-200">
               <ArrowLeftIcon className="h-6 w-6" />
@@ -157,9 +135,7 @@ export default function HabitDetailClient({
               <Link href={`/habit/edit/${habit.id}`} className="p-2 rounded-full text-gray-500 hover:bg-gray-100 transition-colors duration-200" title="習慣を編集">
                 <PencilIcon className="h-6 w-6" />
               </Link>
-              <button onClick={handleDeleteHabit} className="p-2 rounded-full text-red-500 hover:bg-red-100 transition-colors duration-200 cursor-pointer" title="習慣を削除">
-                <TrashIcon className="h-6 w-6" />
-              </button>
+              <DeleteHabitButton habitId={habit.id} onDelete={() => router.push('/dashboard')} />
             </div>
           </div>
 

@@ -87,7 +87,7 @@ export default function NewHabitPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
+    <div className="min-h-[90dvh] bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
       <div className="relative py-3 sm:max-w-xl sm:mx-auto">
         <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-lightBlue-500 shadow-lg transform -skew-y-6 sm:skew-y-0 sm:rotate-3 sm:rounded-3xl"></div>
         <div className="relative px-4 py-10 bg-white shadow-lg sm:rounded-3xl sm:p-20">
@@ -164,7 +164,7 @@ export default function NewHabitPage() {
                     <button
                       key={day}
                       type="button"
-                      className={`py-2 px-1 rounded-md text-sm font-medium transition-colors duration-200 ${
+                      className={`py-2 px-1 rounded-md text-sm font-medium transition-colors duration-200 cursor-pointer ${
                         daysOfWeek.includes(day)
                           ? "bg-indigo-600 text-white shadow-md"
                           : "bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -180,7 +180,7 @@ export default function NewHabitPage() {
               <div className="flex justify-end pt-4">
                 <button
                   type="submit"
-                  className="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  className="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer"
                   disabled={loading}
                 >
                   {loading ? "登録中..." : "習慣を登録"}

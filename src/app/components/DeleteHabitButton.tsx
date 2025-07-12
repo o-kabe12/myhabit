@@ -54,10 +54,10 @@ export default function DeleteHabitButton({ habitId }: DeleteHabitButtonProps) {
     <>
       <button
         onClick={() => setShowModal(true)}
-        className="text-red-600 hover:text-red-800 flex items-center space-x-2 transition-colors duration-200"
+        className="text-red-600 hover:text-red-800 transition-colors duration-200 cursor-pointer"
+        title="習慣を削除"
       >
         <TrashIcon className="h-6 w-6" />
-        <span className="font-medium">削除</span>
       </button>
 
       {showModal && (
@@ -92,14 +92,14 @@ export default function DeleteHabitButton({ habitId }: DeleteHabitButtonProps) {
                   <button
                     onClick={() => setShowModal(false)}
                     disabled={isDeleting}
-                    className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                   >
                     キャンセル
                   </button>
                   <button
                     onClick={handleDelete}
                     disabled={isDeleting}
-                    className={`px-4 py-2 rounded-md text-white transition-colors duration-200 ${
+                    className={`px-4 py-2 rounded-md text-white transition-colors duration-200 cursor-pointer ${
                       isDeleting
                         ? "bg-red-400 cursor-not-allowed"
                         : "bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"

@@ -195,7 +195,7 @@ export default function HabitEditForm({ habit }: HabitEditFormProps) {
         <button
           type="submit"
           disabled={isSubmitting}
-          className={`inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white ${
+          className={`inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white cursor-pointer ${
             isSubmitting ? "bg-indigo-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           }`}
         >

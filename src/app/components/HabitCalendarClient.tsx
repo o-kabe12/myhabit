@@ -77,8 +77,9 @@ export default function HabitCalendarClient({ initialHabit, habitId }: HabitCale
 
   return (
     <div className="md:h-full flex items-center p-4 sm:p-6 lg:p-8">
-      <div className="w-full max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="p-6 sm:p-8">
+      <div className="w-full max-w-4xl mx-auto relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-lightBlue-500 shadow-lg transform -skew-y-6 sm:skew-y-0 sm:rotate-3 sm:rounded-3xl"></div>
+        <div className="p-6 sm:p-8 relative bg-white shadow-lg sm:rounded-3xl rounded-xl">
           <button
             onClick={() => router.push(`/habit/${habitId}`)}
             className="text-blue-600 hover:text-blue-800 flex items-center mb-6 font-medium cursor-pointer"

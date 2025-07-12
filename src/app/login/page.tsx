@@ -26,7 +26,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
+    <div className="h-[90dvh] flex flex-col items-center justify-center bg-gray-100 p-4">
       <h1 className="text-4xl font-bold mb-8 text-gray-800">MyHabit</h1>
       <p className="text-lg text-gray-600 mb-6">習慣を記録して自己成長を実感しよう</p>
 
@@ -34,7 +34,7 @@ export default function LoginPage() {
       {status === "unauthenticated" && (
         <button
           onClick={() => signIn("google")}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out flex items-center space-x-2"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out flex items-center space-x-2 cursor-pointer"
         >
           <svg className="w-5 h-5" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
             {/* GoogleアイコンのSVGパス（簡略化のため省略、実際のアイコンをここに挿入してください） */}
