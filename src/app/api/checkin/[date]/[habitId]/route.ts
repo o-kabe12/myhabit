@@ -28,7 +28,11 @@ export async function GET(request: Request) {
       where: {
         userId: userId,
         habitId: habitId,
-        date: new Date(date),
+        date: new Date(Date.UTC(
+          Number(date.split('-')[0]),
+          Number(date.split('-')[1]) - 1,
+          Number(date.split('-')[2])
+        )),
       },
     });
     if (!checkIn) {

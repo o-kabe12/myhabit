@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { CheckCircleIcon, XCircleIcon, ArrowPathIcon } from "@heroicons/react/24/solid";
 import { CheckCircleIcon as OutlineCheckCircleIcon } from "@heroicons/react/24/outline";
 import useSWR, { mutate as globalMutate } from "swr";
@@ -29,36 +29,35 @@ const formatDateToYYYYMMDD = (date: Date): string => {
 };
 
 export default function CheckInButton({ habitId, date }: CheckInButtonProps) {
-  const checkInApiUrl = `/api/checkin/${date}/${habitId}`;
-  // useSWR の第3引数でオプションを渡す。
-  // refreshInterval: 0 を設定することで、フォーカス時の再検証などを無効化し、手動 mutate のみで制御しやすくする。
-  const { data, error, isLoading, mutate } = useSWR<{ isCheckedIn: boolean }>(checkInApiUrl, fetcher, { refreshInterval: 0 });
+  const checkInApiUrl = (habitId && date) ? `/api/checkin/${date}/${habitId}` : null;
 
-  // UI上の表示状態を管理するstate
-  const [displayCheckedIn, setDisplayCheckedIn] = useState<boolean>(false); // 初期値は false に変更
-  // APIリクエスト中のローディング状態を別途管理
+  // SWRが扱うデータの型をAPIのレスポンスに合わせて <{ isCompleted: boolean }> に修正
+  const { data, error, isLoading, mutate } = useSWR<{ isCompleted: boolean }>(
+    checkInApiUrl,
+    fetcher,
+    {
+      revalidateOnMount: true,
+      revalidateOnFocus: false,
+    }
+  );
+
   const [isMutating, setIsMutating] = useState(false);
 
-  useEffect(() => {
-    // isLoading が false になり、かつ data が undefined でなければ（つまりデータ取得が完了したら）
-    if (!isLoading && data !== undefined) {
-      setDisplayCheckedIn(data.isCheckedIn);
-    }
-  }, [isLoading, data]); // isLoading または data が変更された時に実行
-
   const handleCheckInToggle = async () => {
-    if (isMutating) return; // 二重クリック防止
-    setIsMutating(true); // APIリクエスト開始
+    // isMutatingやisLoading、URLがない場合は処理を中断
+    if (isMutating || isLoading || !checkInApiUrl) return;
 
-    // UIを即座に切り替える (楽観的更新)
-    const previousState = displayCheckedIn;
-    setDisplayCheckedIn(prev => !prev); 
+    setIsMutating(true);
+
+    // キャッシュ内の正しいプロパティ名(isCompleted)を見るように修正
+    const previousState = data?.isCompleted ?? false;
+    // 楽観的更新で操作するデータも正しいプロパティ名に
+    const optimisticData = { isCompleted: !previousState };
+    mutate(optimisticData, false);
 
     try {
-      const method = previousState ? "DELETE" : "PUT"; // 変更前の状態でAPIメソッドを決定
-      const response = await fetch(checkInApiUrl, {
-        method: method,
-      });
+      const method = previousState ? "DELETE" : "PUT";
+      const response = await fetch(checkInApiUrl, { method });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: '不明なエラーが発生しました。' }));
@@ -66,44 +65,51 @@ export default function CheckInButton({ habitId, date }: CheckInButtonProps) {
       }
 
       const successData = await response.json();
-      mutate(successData, { revalidate: false }); // SWRキャッシュを更新し、再検証はしない
-      setDisplayCheckedIn(successData.isCheckedIn); // APIからの最終的な状態を反映
+      mutate(successData, { revalidate: false });
 
-      // カレンダーデータのキャッシュも更新（こちらは revalidate: true で再フェッチさせる）
+      // 関連データのキャッシュ更新
       const today = new Date();
       const currentMonthStartDate = formatDateToYYYYMMDD(new Date(today.getFullYear(), today.getMonth(), 1));
       const currentMonthEndDate = formatDateToYYYYMMDD(new Date(today.getFullYear(), today.getMonth() + 1, 0));
       const calendarApiUrl = `/api/checkin/calendar/${habitId}?startDate=${currentMonthStartDate}&endDate=${currentMonthEndDate}`;
-      globalMutate(calendarApiUrl, { revalidate: true }); // カレンダーはバックグラウンドで最新状態を取得
+      globalMutate(calendarApiUrl);
+
+      const streakApiUrl = `/api/habit/${habitId}/streak`;
+      globalMutate(streakApiUrl);
 
     } catch (err: unknown) {
       console.error("Failed to toggle check-in:", err);
-      // エラーが発生した場合、UIを元の状態に戻す
-      setDisplayCheckedIn(previousState);
-      // SWRのキャッシュも元の状態に戻す（または再検証してエラーをUIに表示）
-      mutate(undefined, { revalidate: true }); // キャッシュをクリアし、再検証してエラーを表示させる
+      // エラー時のロールバックも正しいプロパティ名で
+      mutate({ isCompleted: previousState }, false);
       alert((err instanceof Error ? err.message : "チェックインの更新中にエラーが発生しました。"));
     } finally {
-      setIsMutating(false); // APIリクエスト終了
+      setIsMutating(false);
     }
   };
 
-  // 初回ロード中、またはAPIリクエスト中の場合はローディング表示
-  // SWRのisLoading: APIからの初回データ取得中
-  // isMutating: ボタンクリックによるAPI通信中
-  if (isLoading || isMutating) {
+  // habitId や date が渡される前の状態
+  if (!checkInApiUrl) {
+    return (
+      <button className="flex items-center justify-center px-6 py-3 rounded-full bg-gray-200 text-gray-400 cursor-not-allowed" disabled>
+        情報がありません
+      </button>
+    );
+  }
+
+  // 初回ロード中
+  if (isLoading) {
     return (
       <button
         className="flex items-center justify-center px-6 py-3 rounded-full bg-indigo-200 text-indigo-700 font-bold transition-all duration-200 cursor-not-allowed"
         disabled
       >
         <ArrowPathIcon className="animate-spin h-6 w-6 mr-2" />
-        <span>{isMutating ? "更新中..." : "ロード中..."}</span>
+        <span>ロード中...</span>
       </button>
     );
   }
 
-  // SWRのエラーがある場合、エラー表示
+  // エラー発生時
   if (error) {
     return (
       <div className="text-red-600 text-sm flex items-center">
@@ -112,26 +118,28 @@ export default function CheckInButton({ habitId, date }: CheckInButtonProps) {
       </div>
     );
   }
-  
-  // UI表示用の state (displayCheckedIn) を使用
-  const currentIsCheckedIn = displayCheckedIn; 
+
+  // 最終的な表示状態の判定も正しいプロパティ名(isCompleted)から取得
+  const isCheckedIn = data?.isCompleted ?? false;
 
   return (
     <button
       onClick={handleCheckInToggle}
       className={`flex items-center px-6 py-3 rounded-full font-bold transition-all duration-200 transform cursor-pointer ${
-        currentIsCheckedIn
+        isCheckedIn
           ? "bg-green-500 hover:bg-green-600 text-white shadow-lg scale-105"
           : "bg-gray-200 hover:bg-gray-300 text-gray-700 shadow-md"
       }`}
-      disabled={isMutating} // APIリクエスト中はボタンを無効化
+      disabled={isMutating}
     >
-      {currentIsCheckedIn ? (
+      {isMutating ? (
+        <ArrowPathIcon className="animate-spin h-6 w-6 mr-2" />
+      ) : isCheckedIn ? (
         <CheckCircleIcon className="h-6 w-6 mr-2" />
       ) : (
         <OutlineCheckCircleIcon className="h-6 w-6 mr-2" />
       )}
-      <span>{currentIsCheckedIn ? "チェックイン済み" : "チェックインする"}</span>
+      <span>{isMutating ? "更新中..." : isCheckedIn ? "チェックイン済み" : "チェックインする"}</span>
     </button>
   );
 }

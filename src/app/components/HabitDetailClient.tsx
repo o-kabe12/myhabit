@@ -151,7 +151,11 @@ export default function HabitDetailClient({
 
 
           <div className="mt-8 flex justify-center mt-8">
-            <CheckInButton habitId={habit.id} date={todayFormatted}/>
+            <CheckInButton 
+              habitId={habit.id} 
+              date={todayFormatted}
+              initialIsCheckedIn={checkInStatus?.isCheckedIn ?? initialIsCheckedIn}
+            />
           </div>
 
           <div className="mt-8">

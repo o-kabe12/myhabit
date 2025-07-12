@@ -85,7 +85,7 @@ async function getHabitAndMemoData(habitId: string, userId: string) {
       isCheckedIn: checkIn?.isCompleted || false,
       streak: currentStreak,
       initialMemoContent: dailyMemo?.content || "",
-      todayFormatted: `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`,
+      todayFormatted: `${todayUtc.getUTCFullYear()}-${(todayUtc.getUTCMonth() + 1).toString().padStart(2, '0')}-${todayUtc.getUTCDate().toString().padStart(2, '0')}`,
     };
   } catch (error) {
     console.error("Failed to fetch habit data on server:", error);

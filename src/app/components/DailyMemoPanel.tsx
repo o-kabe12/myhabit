@@ -60,7 +60,8 @@ export default function DailyMemoPanel({ selectedDate }: DailyMemoPanelProps) {
       }
 
       setSaveStatus('success');
-      mutate();
+      // 保存後にデータを再取得
+      mutate(undefined, { revalidate: true });
     } catch (err) {
       console.error("メモ保存エラー:", err);
       setSaveStatus('error');
@@ -89,7 +90,8 @@ export default function DailyMemoPanel({ selectedDate }: DailyMemoPanelProps) {
 
       setMemoContent('');
       setSaveStatus('success');
-      mutate();
+      // 削除後にデータを再取得
+      mutate(undefined, { revalidate: true });
 
     } catch (err) {
       console.error("メモ削除エラー:", err);

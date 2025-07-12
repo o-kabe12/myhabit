@@ -42,9 +42,9 @@ export async function GET(request: Request) {
       },
     });
     if (!memo) {
-      return NextResponse.json({ memo: "" }, { status: 200 });
+      return NextResponse.json({ content: "" }, { status: 200 });
     }
-    return NextResponse.json({ memo: memo.content }, { status: 200 });
+    return NextResponse.json({ content: memo.content }, { status: 200 });
   } catch (error) {
     console.error("メモ取得エラー:", error);
     return NextResponse.json({ error: "メモの取得に失敗しました。" }, { status: 500 });
