@@ -141,7 +141,7 @@ export default function HabitDetailClient({
 
   return (
     <div className="md:h-full p-4 sm:p-6 lg:p-8 flex items-center">
-      <div className="w-full max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+      <div className="w-full h-[85dvh] max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-scroll">
         <div className="p-6 sm:p-8">
           <div className="flex items-center justify-between mb-4">
             <Link href="/dashboard" className="text-gray-600 hover:text-gray-800 flex items-center space-x-2 opacity-75 hover:opacity-100 transition-opacity duration-200">
