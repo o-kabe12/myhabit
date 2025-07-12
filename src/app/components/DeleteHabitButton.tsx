@@ -36,9 +36,9 @@ export default function DeleteHabitButton({ habitId, onDelete }: DeleteHabitButt
       setSuccess("習慣が正常に削除されました。");
       setTimeout(() => {
         if (onDelete) onDelete();
-        router.push("/dashboard");
         router.refresh();
-      }, 1500);
+        router.push("/dashboard");
+      }, 1000);
 
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "習慣の削除中に予期せぬエラーが発生しました。");

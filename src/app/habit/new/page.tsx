@@ -45,7 +45,7 @@ export default function NewHabitPage() {
       return;
     }
     if (daysOfWeek.length === 0) {
-      setError("実行する曜日を少なくとも1つ選択してください。");
+      setError("曜日を最低1つ選択してください。");
       setLoading(false);
       return;
     }
